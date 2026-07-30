@@ -1,0 +1,2910 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MM Personalizados - Sistema de Gestão</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bronze: {
+              50: '#fdfaf6',
+              100: '#f8f0e5',
+              200: '#eedcc8',
+              300: '#dfc2a3',
+              400: '#c89968',
+              500: '#8c522b',
+              600: '#6e3b1e',
+              700: '#5b3219',
+              800: '#4a2712',
+              900: '#3b1d0b',
+            },
+            pinkbrand: {
+              50: '#fdf2f8',
+              100: '#fce7f3',
+              200: '#fbcfe8',
+              300: '#f9a8d4',
+              400: '#f472b6',
+              500: '#db2777',
+              600: '#c2185b',
+              700: '#9d174d',
+              800: '#801139',
+            },
+            cream: {
+              50: '#fffdfa',
+              100: '#faf6f0',
+              200: '#f4ece1',
+              300: '#e8dbcc',
+            }
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            display: ['Outfit', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #faf6f0;
+    }
+    h1, h2, h3, .font-display {
+      font-family: 'Outfit', sans-serif;
+    }
+    /* Printable Area Styling */
+    @media print {
+      body {
+        background: white !important;
+        color: black !important;
+      }
+      header, nav, footer, #toast-container, .no-print, body > *:not(#modal-pedido) {
+        display: none !important;
+      }
+      #modal-pedido {
+        display: block !important;
+        position: absolute !important;
+        inset: 0 !important;
+        background: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        z-index: 99999 !important;
+      }
+      #print-modal {
+        max-height: none !important;
+        overflow: visible !important;
+        box-shadow: none !important;
+        border: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 16px !important;
+        margin: 0 !important;
+      }
+    }
+  </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col bg-[#FAF6F0]">
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Header & Navigation -->
+  <header class="bg-[#FFFDF9] border-b border-[#EFE5D9] sticky top-0 z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20 sm:h-24 py-2">
+        
+        <!-- Logo / Title -->
+        <div class="flex items-center space-x-3 sm:space-x-4">
+          <div class="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden border-2 border-amber-300/80 shadow-md shadow-amber-900/10 bg-white p-0.5 flex-shrink-0">
+            <img src="/logo.jpg" alt="MM Personalizados Logo" class="w-full h-full object-contain rounded-xl" />
+          </div>
+          <div>
+            <h1 class="text-xl sm:text-2xl font-extrabold text-[#5B3219] font-display tracking-tight flex items-center gap-2">
+              MM Personalizados
+            </h1>
+            <p class="text-xs text-[#8C522B] font-semibold hidden sm:block">Gestão de Ateliê • Materiais, Produtos e Pedidos</p>
+          </div>
+        </div>
+
+        <!-- Quick Summary Stats -->
+        <div class="hidden lg:flex items-center gap-4 text-sm">
+          <div class="flex items-center gap-2 bg-[#FDF2F8] text-[#BE185D] px-3.5 py-2 rounded-xl border border-pink-200/80 font-medium">
+            <i class="fa-solid fa-box-open text-pink-600"></i>
+            <span>Materiais: <strong id="stat-materias-count" class="font-extrabold">0</strong></span>
+          </div>
+          <div class="flex items-center gap-2 bg-[#FAF0E6] text-[#6E3B1E] px-3.5 py-2 rounded-xl border border-amber-200/80 font-medium">
+            <i class="fa-solid fa-tags text-amber-700"></i>
+            <span>Produtos: <strong id="stat-produtos-count" class="font-extrabold">0</strong></span>
+          </div>
+          <div class="flex items-center gap-2 bg-[#ECFDF5] text-[#047857] px-3.5 py-2 rounded-xl border border-emerald-200/80 font-medium">
+            <i class="fa-solid fa-receipt text-emerald-600"></i>
+            <span>Pedidos Em Aberto: <strong id="stat-pedidos-count" class="font-extrabold">0</strong></span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Main Tabs -->
+      <nav id="main-tabs" class="flex space-x-2 sm:space-x-3 border-t border-[#EFE5D9] pt-2 pb-2.5 overflow-x-auto">
+        <button onclick="switchTab('tab-materia-prima')" id="nav-tab-materia-prima" class="tab-btn active px-4 py-2.5 rounded-xl font-bold text-sm sm:text-base flex items-center gap-2 transition-all whitespace-nowrap bg-[#6E3B1E] text-white shadow-sm shadow-amber-900/20">
+          <i class="fa-solid fa-layer-group"></i>
+          <span>1. Matéria-Prima</span>
+        </button>
+
+        <button onclick="switchTab('tab-produtos')" id="nav-tab-produtos" class="tab-btn px-4 py-2.5 rounded-xl font-bold text-sm sm:text-base flex items-center gap-2 transition-all whitespace-nowrap text-[#6E3B1E] hover:bg-[#F4ECE1]">
+          <i class="fa-solid fa-box"></i>
+          <span>2. Produtos</span>
+        </button>
+
+        <button onclick="switchTab('tab-novo-pedido')" id="nav-tab-novo-pedido" class="tab-btn px-4 py-2.5 rounded-xl font-bold text-sm sm:text-base flex items-center gap-2 transition-all whitespace-nowrap text-[#6E3B1E] hover:bg-[#F4ECE1]">
+          <i class="fa-solid fa-cart-plus"></i>
+          <span>3. Novo Pedido</span>
+        </button>
+
+        <button onclick="switchTab('tab-pedidos')" id="nav-tab-pedidos" class="tab-btn px-4 py-2.5 rounded-xl font-bold text-sm sm:text-base flex items-center gap-2 transition-all whitespace-nowrap text-[#6E3B1E] hover:bg-[#F4ECE1]">
+          <i class="fa-solid fa-clipboard-list"></i>
+          <span>4. Pedidos</span>
+          <span id="badge-pedidos-ativos-count" class="hidden px-2 py-0.5 rounded-full text-xs font-extrabold bg-[#DB2777] text-white shadow-sm">0</span>
+        </button>
+
+        <button onclick="switchTab('tab-historico-pedidos')" id="nav-tab-historico-pedidos" class="tab-btn px-4 py-2.5 rounded-xl font-bold text-sm sm:text-base flex items-center gap-2 transition-all whitespace-nowrap text-[#6E3B1E] hover:bg-[#F4ECE1]">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span>Histórico</span>
+        </button>
+      </nav>
+
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+    <!-- ========================================== -->
+    <!-- ABA 1: MATÉRIA-PRIMA                       -->
+    <!-- ========================================== -->
+    <section id="tab-materia-prima" class="tab-content space-y-6">
+      
+      <!-- Section Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <span class="w-8 h-8 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center text-sm">
+              <i class="fa-solid fa-layer-group"></i>
+            </span>
+            Cadastro de Matérias-Primas
+          </h2>
+          <p class="text-sm text-slate-500 mt-1">Cadastre os papéis, fitas, colas e insumos utilizados na fabricação dos seus produtos.</p>
+        </div>
+        <div class="text-xs text-slate-400 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved text-pink-400"></i>
+          <span>Dados salvos automaticamente no seu navegador</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Formulário de Cadastro de Matéria-Prima -->
+        <div class="lg:col-span-5 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm h-fit">
+          <h3 id="mat-form-title" class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-plus-circle text-pink-500"></i>
+            Nova Matéria-Prima
+          </h3>
+
+          <form id="form-materia-prima" onsubmit="salvarMateriaPrima(event)" class="space-y-4">
+            <input type="hidden" id="mat-id-edit" value="" />
+
+            <div>
+              <label for="mat-descricao" class="block text-sm font-semibold text-slate-700 mb-1">
+                Descrição do Material <span class="text-pink-500">*</span>
+              </label>
+              <input 
+                type="text" 
+                id="mat-descricao" 
+                required
+                placeholder="Ex: Papel Fotográfico 180g Glossy" 
+                class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 text-sm transition-all"
+              />
+            </div>
+
+            <div>
+              <label for="mat-valor" class="block text-sm font-semibold text-slate-700 mb-1">
+                Valor Unitário (R$) <span class="text-pink-500">*</span>
+              </label>
+              <div class="relative">
+                <span class="absolute left-3.5 top-2.5 text-slate-400 text-sm font-medium">R$</span>
+                <input 
+                  type="number" 
+                  id="mat-valor" 
+                  step="0.01" 
+                  min="0.01"
+                  required
+                  placeholder="0,00" 
+                  class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 text-sm transition-all"
+                />
+              </div>
+              <p class="text-xs text-slate-400 mt-1">Custo individual por unidade ou folha utilizada.</p>
+            </div>
+
+            <button 
+              type="submit" 
+              id="btn-mat-submit"
+              class="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold py-3 px-4 rounded-xl shadow-md shadow-pink-200 transition-all flex items-center justify-center gap-2 text-sm"
+            >
+              <i class="fa-solid fa-plus" id="btn-mat-submit-icon"></i>
+              <span id="btn-mat-submit-text">Cadastrar Matéria-Prima</span>
+            </button>
+
+            <button 
+              type="button" 
+              id="btn-mat-cancel" 
+              onclick="cancelarEdicaoMateriaPrima()" 
+              class="hidden w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-4 rounded-xl text-xs transition-all"
+            >
+              Cancelar Edição
+            </button>
+          </form>
+        </div>
+
+        <!-- Tabela de Materiais Cadastrados -->
+        <div class="lg:col-span-7 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-list-check text-pink-500"></i>
+              Materiais Cadastrados
+            </h3>
+            <span id="badge-materias-count" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-pink-100 text-pink-700">
+              0 itens
+            </span>
+          </div>
+
+          <!-- Quick Search -->
+          <div class="mb-4">
+            <div class="relative">
+              <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+              <input 
+                type="text" 
+                id="search-materia" 
+                oninput="renderTabelaMaterias()" 
+                placeholder="Buscar matéria-prima..." 
+                class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-pink-500"
+              />
+            </div>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-slate-100">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-50 text-slate-600 font-semibold text-xs uppercase tracking-wider border-b border-slate-100">
+                <tr>
+                  <th class="px-4 py-3">Descrição</th>
+                  <th class="px-4 py-3 text-right">Valor Unitário</th>
+                  <th class="px-4 py-3 text-center w-24">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-materias" class="divide-y divide-slate-100 text-slate-700">
+                <!-- Preenchido via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- ABA 2: PRODUTOS                            -->
+    <!-- ========================================== -->
+    <section id="tab-produtos" class="tab-content hidden space-y-6">
+      
+      <!-- Section Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <span class="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center text-sm">
+              <i class="fa-solid fa-box"></i>
+            </span>
+            Cadastro e Precificação de Produtos
+          </h2>
+          <p class="text-sm text-slate-500 mt-1">Monte a composição do produto selecionando matérias-primas e defina a margem de lucro ideal.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Formulário de Cadastro de Produto -->
+        <div class="lg:col-span-6 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+          <h3 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+            <i class="fa-solid fa-file-circle-plus text-purple-500"></i>
+            Novo Produto
+          </h3>
+
+          <form id="form-produto" onsubmit="salvarProduto(event)" class="space-y-4">
+            
+            <!-- Nome do Produto -->
+            <div>
+              <label for="prod-nome" class="block text-sm font-semibold text-slate-700 mb-1">
+                Nome do Produto <span class="text-pink-500">*</span>
+              </label>
+              <input 
+                type="text" 
+                id="prod-nome" 
+                required
+                placeholder="Ex: Caixa Milk Temática 3D" 
+                class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm transition-all"
+              />
+            </div>
+
+            <!-- Seleção das 4 Matérias-Primas -->
+            <div class="bg-purple-50/50 p-4 rounded-xl border border-purple-100/80 space-y-3">
+              <div class="flex items-center justify-between">
+                <label class="block text-xs font-bold text-purple-900 uppercase tracking-wider">
+                  Composição do Produto (Até 4 Matérias-Primas)
+                </label>
+                <span class="text-xs text-purple-600 font-medium">Selecione material e quantidade</span>
+              </div>
+
+              <!-- Matéria-Prima 1 -->
+              <div class="grid grid-cols-12 gap-2 items-center">
+                <div class="col-span-8 sm:col-span-9">
+                  <label class="block text-xs text-slate-500 mb-1 font-medium">Matéria-Prima 1:</label>
+                  <select id="prod-mat1" onchange="calcularPrecoProduto()" class="select-materia w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-purple-500 bg-white">
+                    <!-- Opções inseridas via JS -->
+                  </select>
+                </div>
+                <div class="col-span-4 sm:col-span-3">
+                  <label class="block text-xs text-slate-500 mb-1 font-medium">Qtd Usada:</label>
+                  <input type="number" id="prod-qtd1" min="0.01" step="any" value="1" oninput="calcularPrecoProduto()" onchange="calcularPrecoProduto()" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm text-center font-semibold focus:outline-none focus:border-purple-500 bg-white" placeholder="1" />
+                </div>
+              </div>
+
+              <!-- Matéria-Prima 2 -->
+              <div class="grid grid-cols-12 gap-2 items-center">
+                <div class="col-span-8 sm:col-span-9">
+                  <label class="block text-xs text-slate-500 mb-1 font-medium">Matéria-Prima 2:</label>
+                  <select id="prod-mat2" onchange="calcularPrecoProduto()" class="select-materia w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-purple-500 bg-white">
+                    <!-- Opções inseridas via JS -->
+                  </select>
+                </div>
+                <div class="col-span-4 sm:col-span-3">
+                  <label class="block text-xs text-slate-500 mb-1 font-medium">Qtd Usada:</label>
+                  <input type="number" id="prod-qtd2" min="0.01" step="any" value="1" oninput="calcularPrecoProduto()" onchange="calcularPrecoProduto()" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm text-center font-semibold focus:outline-none focus:border-purple-500 bg-white" placeholder="1" />
+                </div>
+              </div>
+
+              <!-- Matéria-Prima 3 -->
+              <div class="grid grid-cols-12 gap-2 items-center">
+                <div class="col-span-8 sm:col-span-9">
+                  <label class="block text-xs text-slate-500 mb-1 font-medium">Matéria-Prima 3:</label>
+                  <select id="prod-mat3" onchange="calcularPrecoProduto()" class="select-materia w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-purple-500 bg-white">
+                    <!-- Opções inseridas via JS -->
+                  </select>
+                </div>
+                <div class="col-span-4 sm:col-span-3">
+                  <label class="block text-xs text-slate-500 mb-1 font-medium">Qtd Usada:</label>
+                  <input type="number" id="prod-qtd3" min="0.01" step="any" value="1" oninput="calcularPrecoProduto()" onchange="calcularPrecoProduto()" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm text-center font-semibold focus:outline-none focus:border-purple-500 bg-white" placeholder="1" />
+                </div>
+              </div>
+
+              <!-- Matéria-Prima 4 -->
+              <div class="grid grid-cols-12 gap-2 items-center">
+                <div class="col-span-8 sm:col-span-9">
+                  <label class="block text-xs text-slate-500 mb-1 font-medium">Matéria-Prima 4:</label>
+                  <select id="prod-mat4" onchange="calcularPrecoProduto()" class="select-materia w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-purple-500 bg-white">
+                    <!-- Opções inseridas via JS -->
+                  </select>
+                </div>
+                <div class="col-span-4 sm:col-span-3">
+                  <label class="block text-xs text-slate-500 mb-1 font-medium">Qtd Usada:</label>
+                  <input type="number" id="prod-qtd4" min="0.01" step="any" value="1" oninput="calcularPrecoProduto()" onchange="calcularPrecoProduto()" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm text-center font-semibold focus:outline-none focus:border-purple-500 bg-white" placeholder="1" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Card de Cálculo Automático -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200/70">
+              
+              <!-- Subtotal Custo -->
+              <div class="space-y-1">
+                <span class="text-xs font-semibold text-slate-500 block">Custo Total dos Materiais</span>
+                <div class="text-lg font-bold text-slate-800" id="prod-custo-display">
+                  R$ 0,00
+                </div>
+                <input type="hidden" id="prod-custo-valor" value="0" />
+              </div>
+
+              <!-- Sugestão 150% -->
+              <div class="space-y-1 sm:border-l sm:border-slate-200 sm:pl-4">
+                <span class="text-xs font-semibold text-emerald-600 block flex items-center gap-1">
+                  <i class="fa-solid fa-chart-line text-xs"></i> Preço Sugerido (+150%)
+                </span>
+                <div class="text-lg font-bold text-emerald-600" id="prod-sugerido-display">
+                  R$ 0,00
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Campo Editável de Preço Final -->
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label for="prod-venda-input" class="block text-sm font-semibold text-slate-700">
+                  Preço de Venda Final (R$) <span class="text-pink-500">*</span>
+                </label>
+                <button 
+                  type="button" 
+                  onclick="reaplicarMargemSugerida()" 
+                  class="text-xs text-purple-600 hover:text-purple-800 font-medium underline flex items-center gap-1"
+                >
+                  <i class="fa-solid fa-rotate-left"></i> Reaplicar 150%
+                </button>
+              </div>
+
+              <div class="relative">
+                <span class="absolute left-3.5 top-2.5 text-slate-400 text-sm font-medium">R$</span>
+                <input 
+                  type="number" 
+                  id="prod-venda-input" 
+                  step="0.01" 
+                  min="0.01"
+                  required
+                  placeholder="0,00" 
+                  class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 text-sm font-semibold text-slate-900 transition-all"
+                />
+              </div>
+              <p class="text-xs text-slate-400 mt-1">
+                Vem preenchido com 150% de lucro (Custo x 2.5), mas você pode alterar livremente.
+              </p>
+            </div>
+
+            <!-- Botão e Card de Inteligência IA para o Produto -->
+            <div class="border-t border-purple-100 pt-3 space-y-3">
+              <button 
+                type="button" 
+                onclick="gerarInformacoesProdutoIA()" 
+                id="btn-gerar-ia-prod" 
+                class="w-full bg-gradient-to-r from-amber-500 via-purple-600 to-indigo-600 hover:from-amber-600 hover:to-indigo-700 text-white font-bold py-2.5 px-4 rounded-xl shadow-md shadow-purple-200 transition-all flex items-center justify-center gap-2 text-xs"
+              >
+                <i class="fa-solid fa-wand-magic-sparkles text-amber-200 text-sm"></i>
+                <span id="btn-gerar-ia-prod-text">Gerar Legenda & Dicas com IA</span>
+              </button>
+
+              <div id="container-ia-produto" class="hidden bg-purple-50/70 border border-purple-200 p-4 rounded-xl text-xs space-y-3 text-slate-800">
+                <div class="flex items-center justify-between border-b border-purple-200/80 pb-2">
+                  <span class="font-bold text-purple-900 flex items-center gap-1.5 text-xs">
+                    <i class="fa-solid fa-sparkles text-amber-500"></i> Sugestão da IA para Redes Sociais
+                  </span>
+                  <button type="button" onclick="copiarDescricaoIAProduto()" class="text-purple-700 hover:text-purple-900 font-semibold underline flex items-center gap-1">
+                    <i class="fa-regular fa-copy"></i> Copiar
+                  </button>
+                </div>
+                
+                <div>
+                  <p class="font-semibold text-purple-950 mb-1">Legenda para Divulgação:</p>
+                  <p id="ia-prod-descricao" class="text-slate-700 bg-white p-2.5 rounded-lg border border-purple-100 whitespace-pre-wrap leading-relaxed text-[11px]"></p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <p class="font-semibold text-purple-950 mb-0.5">Dicas de Precificação:</p>
+                    <p id="ia-prod-dicas" class="text-slate-600 text-[11px] leading-relaxed"></p>
+                  </div>
+                  <div>
+                    <p class="font-semibold text-purple-950 mb-0.5">Tempo Estimado:</p>
+                    <p id="ia-prod-tempo" class="text-purple-800 font-medium text-[11px]"></p>
+                  </div>
+                </div>
+
+                <div>
+                  <p class="font-semibold text-purple-950 mb-1">Hashtags Recomendadas:</p>
+                  <div id="ia-prod-tags" class="flex flex-wrap gap-1"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botão Salvar Produto -->
+            <button 
+              type="submit" 
+              class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md shadow-purple-200 transition-all flex items-center justify-center gap-2 text-sm"
+            >
+              <i class="fa-solid fa-floppy-disk"></i>
+              Salvar Produto
+            </button>
+
+          </form>
+        </div>
+
+        <!-- Tabela de Produtos Cadastrados -->
+        <div class="lg:col-span-6 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-boxes-stacked text-purple-500"></i>
+              Produtos Cadastrados
+            </h3>
+            <span id="badge-produtos-count" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-purple-100 text-purple-700">
+              0 produtos
+            </span>
+          </div>
+
+          <div class="overflow-x-auto rounded-xl border border-slate-100">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-50 text-slate-600 font-semibold text-xs uppercase tracking-wider border-b border-slate-100">
+                <tr>
+                  <th class="px-4 py-3">Nome do Produto</th>
+                  <th class="px-4 py-3 text-right">Custo Total</th>
+                  <th class="px-4 py-3 text-right">Preço Venda</th>
+                  <th class="px-4 py-3 text-center w-20">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-produtos" class="divide-y divide-slate-100 text-slate-700">
+                <!-- Preenchido via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- ABA 3: NOVO PEDIDO                         -->
+    <!-- ========================================== -->
+    <section id="tab-novo-pedido" class="tab-content hidden space-y-6">
+      
+      <!-- Banner de Modo de Edição -->
+      <div id="banner-edicao-pedido" class="hidden bg-amber-50 border border-amber-200 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-900 shadow-sm">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 text-base">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </div>
+          <div>
+            <p class="font-bold text-sm">Editando o Pedido <span id="edicao-pedido-numero" class="text-amber-800 font-extrabold">#0000</span></p>
+            <p class="text-xs text-amber-700">Altere os dados necessários e clique em "Salvar Alterações".</p>
+          </div>
+        </div>
+        <button type="button" onclick="cancelarEdicaoPedido()" class="px-3.5 py-1.5 bg-amber-200/80 hover:bg-amber-200 text-amber-900 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0">
+          <i class="fa-solid fa-xmark"></i> Cancelar Edição
+        </button>
+      </div>
+
+      <form id="form-pedido" onsubmit="salvarOuGerarPedido(event)" class="space-y-6">
+        
+        <!-- Cabeçalho do Pedido Card -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-4 gap-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+                <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm">
+                  <i class="fa-solid fa-cart-shopping"></i>
+                </span>
+                Formulário de Novo Pedido
+              </h2>
+              <p class="text-sm text-slate-500 mt-1">Monte o orçamento do cliente e gere o pedido em aberto.</p>
+            </div>
+
+            <!-- Número do Pedido Autogerado -->
+            <div class="bg-emerald-50 border border-emerald-200 px-5 py-2.5 rounded-2xl text-center sm:text-right">
+              <span class="text-xs font-semibold text-emerald-700 uppercase tracking-wider block">Número do Pedido</span>
+              <span class="text-2xl font-black text-emerald-800" id="pedido-numero-display">#0001</span>
+            </div>
+          </div>
+
+          <!-- Nome do Cliente e Data de Entrega -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="pedido-cliente" class="block text-sm font-semibold text-slate-700 mb-1">
+                Nome do Cliente <span class="text-pink-500">*</span>
+              </label>
+              <div class="relative">
+                <i class="fa-solid fa-user absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+                <input 
+                  type="text" 
+                  id="pedido-cliente" 
+                  required
+                  placeholder="Ex: Ana Maria Silva" 
+                  class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm transition-all"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label for="pedido-data-entrega" class="block text-sm font-semibold text-slate-700 mb-1">
+                Data de Entrega
+              </label>
+              <div class="relative">
+                <i class="fa-solid fa-calendar-days absolute left-3.5 top-3 text-slate-400 text-sm pointer-events-none"></i>
+                <input 
+                  type="date" 
+                  id="pedido-data-entrega" 
+                  onmouseenter="try{ if(typeof this.showPicker==='function') this.showPicker(); }catch(e){}"
+                  onclick="try{ if(typeof this.showPicker==='function') this.showPicker(); }catch(e){}"
+                  class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm transition-all cursor-pointer text-slate-700"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabela Dinâmica de Itens do Pedido Card -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+          
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-3">
+            <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-list text-emerald-500"></i>
+              Itens do Pedido
+            </h3>
+
+            <!-- Botão Adicionar Item -->
+            <button 
+              type="button" 
+              onclick="adicionarLinhaItem()" 
+              class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-emerald-200"
+            >
+              <i class="fa-solid fa-plus"></i>
+              Adicionar Item ao Pedido
+            </button>
+          </div>
+
+          <!-- Table Wrapper -->
+          <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full text-left text-sm min-w-[650px]">
+              <thead class="bg-slate-50 text-slate-600 font-semibold text-xs uppercase tracking-wider border-b border-slate-200">
+                <tr>
+                  <th class="px-3 py-3 w-28">Qtd</th>
+                  <th class="px-3 py-3">Produto</th>
+                  <th class="px-3 py-3 w-36 text-right">Valor Unit. (R$)</th>
+                  <th class="px-3 py-3 w-36 text-right">Valor Total (R$)</th>
+                  <th class="px-3 py-3 w-16 text-center">Remover</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-itens-pedido" class="divide-y divide-slate-100">
+                <!-- Linhas inseridas via JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <div id="msg-sem-itens" class="hidden text-center py-6 text-slate-400 text-sm italic">
+            Nenhum item adicionado ao pedido ainda. Clique em "Adicionar Item ao Pedido".
+          </div>
+
+        </div>
+
+        <!-- Rodapé do Pedido Card -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- Forma de Pagamento e Observações -->
+          <div class="lg:col-span-7 space-y-4">
+            
+            <div>
+              <label for="pedido-pagamento" class="block text-sm font-semibold text-slate-700 mb-1">
+                Forma de Pagamento <span class="text-pink-500">*</span>
+              </label>
+              <select 
+                id="pedido-pagamento" 
+                required
+                class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-emerald-500 bg-white"
+              >
+                <option value="Pix">Pix</option>
+                <option value="Dinheiro">Dinheiro</option>
+                <option value="Cartão de Crédito">Cartão de Crédito</option>
+                <option value="Cartão de Débito">Cartão de Débito</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="pedido-obs" class="block text-sm font-semibold text-slate-700 mb-1">
+                Observações do Pedido
+              </label>
+              <textarea 
+                id="pedido-obs" 
+                rows="3" 
+                placeholder="Ex: Tema Galinha Pintadinha, nome da criança: Lucas (2 anos). Data da festa: 15/10." 
+                class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-emerald-500"
+              ></textarea>
+            </div>
+
+          </div>
+
+          <!-- Autosoma Total e Botão Gerar -->
+          <div class="lg:col-span-5 bg-slate-50 p-6 rounded-2xl border border-slate-200 flex flex-col justify-between space-y-6">
+            
+            <div class="space-y-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500 block">Total Geral do Pedido</span>
+              <div class="text-3xl sm:text-4xl font-extrabold text-emerald-600" id="pedido-total-display">
+                R$ 0,00
+              </div>
+              <p class="text-xs text-slate-400">Soma automática de todos os itens cadastrados acima.</p>
+            </div>
+
+            <button 
+              type="submit" 
+              id="btn-submit-pedido"
+              class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-emerald-200 transition-all flex items-center justify-center gap-2 text-base"
+            >
+              <i class="fa-solid fa-cart-plus" id="btn-submit-pedido-icon"></i>
+              <span id="btn-submit-pedido-texto">Gerar Pedido</span>
+            </button>
+
+          </div>
+
+        </div>
+
+      </form>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- ABA 4: PEDIDOS EM ABERTO                   -->
+    <!-- ========================================== -->
+    <section id="tab-pedidos" class="tab-content hidden space-y-6">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm">
+              <i class="fa-solid fa-clipboard-list"></i>
+            </span>
+            Pedidos Gerados (Em Aberto)
+          </h2>
+          <p class="text-sm text-slate-500 mt-1">Consulte, altere ou finalize os pedidos em andamento antes de movê-los para o histórico.</p>
+        </div>
+        <button 
+          onclick="novaOrdemEIrParaForm()" 
+          class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-sm shadow-emerald-200 shrink-0"
+        >
+          <i class="fa-solid fa-plus"></i>
+          Novo Pedido
+        </button>
+      </div>
+
+      <!-- Barra de Filtros de Pedidos -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
+        
+        <!-- Campo Busca -->
+        <div class="relative flex-1 min-w-[240px]">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+          <input 
+            type="text" 
+            id="filtro-pedido-busca" 
+            oninput="renderTabelaPedidosAtivos()" 
+            placeholder="Buscar por cliente, nº do pedido ou item..." 
+            class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600 transition-all text-slate-800"
+          />
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+          <!-- Filtro Forma de Pagamento -->
+          <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 p-1 rounded-xl border border-slate-200">
+            <i class="fa-solid fa-credit-card text-amber-700 ml-2"></i>
+            <select 
+              id="filtro-pedido-pagamento" 
+              onchange="renderTabelaPedidosAtivos()" 
+              class="bg-transparent text-slate-700 py-1.5 pr-2 pl-1 rounded-lg text-xs font-semibold focus:outline-none cursor-pointer"
+            >
+              <option value="">Todos os Pagamentos</option>
+              <option value="Pix">Pix</option>
+              <option value="Cartão de Crédito">Cartão de Crédito</option>
+              <option value="Cartão de Débito">Cartão de Débito</option>
+              <option value="Dinheiro">Dinheiro</option>
+              <option value="Boleto">Boleto</option>
+              <option value="Outro">Outro</option>
+            </select>
+          </div>
+
+          <!-- Filtro Data de Entrega -->
+          <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 p-1 rounded-xl border border-slate-200">
+            <i class="fa-regular fa-calendar-check text-amber-700 ml-2"></i>
+            <select 
+              id="filtro-pedido-entrega" 
+              onchange="renderTabelaPedidosAtivos()" 
+              class="bg-transparent text-slate-700 py-1.5 pr-2 pl-1 rounded-lg text-xs font-semibold focus:outline-none cursor-pointer"
+            >
+              <option value="todas">Todas as Entregas</option>
+              <option value="hoje">Entrega Hoje</option>
+              <option value="proximos_7">Próximos 7 Dias</option>
+              <option value="com_data">Com Data de Entrega</option>
+              <option value="sem_data">Sem Data Definida</option>
+            </select>
+          </div>
+
+          <!-- Ordenação -->
+          <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 p-1 rounded-xl border border-slate-200">
+            <i class="fa-solid fa-arrow-down-short-wide text-amber-700 ml-2"></i>
+            <select 
+              id="filtro-pedido-ordem" 
+              onchange="renderTabelaPedidosAtivos()" 
+              class="bg-transparent text-slate-700 py-1.5 pr-2 pl-1 rounded-lg text-xs font-semibold focus:outline-none cursor-pointer"
+            >
+              <option value="entrega_asc">Entrega Mais Próxima</option>
+              <option value="criacao_desc">Mais Recentes (Padrão)</option>
+              <option value="criacao_asc">Mais Antigos</option>
+              <option value="cliente_asc">Cliente (A-Z)</option>
+              <option value="valor_desc">Maior Valor</option>
+              <option value="valor_asc">Menor Valor</option>
+            </select>
+          </div>
+
+          <!-- Botão Limpar -->
+          <button 
+            onclick="limparFiltrosPedidosAtivos()" 
+            class="px-3 py-2 rounded-xl text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 transition-all flex items-center gap-1"
+            title="Limpar Filtros"
+          >
+            <i class="fa-solid fa-filter-circle-xmark"></i>
+            Limpar
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Indicador de Resultados -->
+      <div class="flex items-center justify-between text-xs font-semibold text-slate-500 px-1">
+        <span id="info-contador-pedidos-ativos">Carregando pedidos...</span>
+      </div>
+
+      <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+        <div class="overflow-x-auto rounded-xl border border-slate-100">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 text-slate-600 font-semibold text-xs uppercase tracking-wider border-b border-slate-100">
+              <tr>
+                <th class="px-4 py-3">Pedido</th>
+                <th class="px-4 py-3">Cliente</th>
+                <th class="px-4 py-3">Data Criação</th>
+                <th class="px-4 py-3">Data Entrega</th>
+                <th class="px-4 py-3">Itens</th>
+                <th class="px-4 py-3">Pagamento</th>
+                <th class="px-4 py-3 text-right">Total</th>
+                <th class="px-4 py-3 text-center w-52">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-pedidos-ativos" class="divide-y divide-slate-100 text-slate-700">
+              <!-- Preenchido via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- ABA 4: HISTÓRICO DE PEDIDOS                -->
+    <!-- ========================================== -->
+    <section id="tab-historico-pedidos" class="tab-content hidden space-y-6">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-sm">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+            </span>
+            Histórico de Pedidos Finalizados
+          </h2>
+          <p class="text-sm text-slate-500 mt-1">Consulte todas as vendas já registradas no sistema e imprima comprovantes.</p>
+        </div>
+      </div>
+
+      <!-- Filtro Histórico -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div class="relative w-full sm:w-80">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+          <input 
+            type="text" 
+            id="filtro-historico-busca" 
+            oninput="renderHistoricoPedidos()" 
+            placeholder="Buscar no histórico por cliente ou nº..." 
+            class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600 transition-all text-slate-800"
+          />
+        </div>
+        <span id="info-contador-historico" class="text-xs font-semibold text-slate-500"></span>
+      </div>
+
+      <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+        <div class="overflow-x-auto rounded-xl border border-slate-100">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 text-slate-600 font-semibold text-xs uppercase tracking-wider border-b border-slate-100">
+              <tr>
+                <th class="px-4 py-3">Pedido</th>
+                <th class="px-4 py-3">Cliente</th>
+                <th class="px-4 py-3">Data/Hora</th>
+                <th class="px-4 py-3">Pagamento</th>
+                <th class="px-4 py-3 text-right">Total</th>
+                <th class="px-4 py-3 text-center w-32">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-historico" class="divide-y divide-slate-100 text-slate-700">
+              <!-- Preenchido via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Modal Detalhes/Impressão do Pedido -->
+  <div id="modal-pedido" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div id="print-modal" class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto">
+      
+      <div class="flex items-center justify-between border-b border-amber-200/80 pb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl overflow-hidden border border-amber-300 bg-white p-0.5 shadow-sm">
+            <img src="/logo.jpg" alt="MM Personalizados" class="w-full h-full object-contain rounded-lg" />
+          </div>
+          <div>
+            <h3 class="font-bold text-lg text-[#5B3219] font-display">Comprovante de Pedido</h3>
+            <p class="text-xs text-[#8C522B] font-semibold">MM Personalizados</p>
+          </div>
+        </div>
+        <button onclick="fecharModalPedido()" class="no-print text-slate-400 hover:text-slate-600 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div id="modal-pedido-conteudo" class="space-y-4 text-sm">
+        <!-- Conteúdo dinâmico do pedido -->
+      </div>
+
+      <div class="no-print flex flex-wrap items-center justify-end gap-2.5 border-t border-slate-100 pt-4">
+        <button onclick="gerarMensagemWhatsAppIAParaPedidoAtual()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm shadow-emerald-200 transition-all">
+          <i class="fa-brands fa-whatsapp text-sm"></i>
+          <span>Mensagem WhatsApp IA</span>
+        </button>
+        <button onclick="fecharModalPedido()" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs hover:bg-slate-50 font-medium">
+          Fechar
+        </button>
+        <button onclick="imprimirComprovante()" class="px-4 py-2 rounded-xl bg-pink-500 text-white text-xs font-bold hover:bg-pink-600 flex items-center gap-1.5 shadow-md shadow-pink-200 transition-all">
+          <i class="fa-solid fa-print"></i>
+          Imprimir / PDF
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal Mensagem WhatsApp IA -->
+  <div id="modal-whatsapp-ia" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg">
+            <i class="fa-brands fa-whatsapp"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-slate-900">Mensagem para WhatsApp IA</h3>
+            <p class="text-xs text-slate-500">Texto gerado para envio ao cliente</p>
+          </div>
+        </div>
+        <button onclick="fecharModalWhatsAppIA()" class="text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div>
+        <textarea 
+          id="textarea-msg-wa-ia" 
+          rows="7" 
+          class="w-full p-3.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 leading-relaxed focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+        ></textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-2.5 pt-1">
+        <button onclick="fecharModalWhatsAppIA()" class="px-3.5 py-2 rounded-xl border border-slate-200 text-slate-600 text-xs font-medium hover:bg-slate-50">
+          Cancelar
+        </button>
+        <button onclick="copiarMensagemWhatsAppIA()" class="px-3.5 py-2 rounded-xl bg-slate-100 text-slate-800 hover:bg-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all">
+          <i class="fa-regular fa-copy"></i> Copiar
+        </button>
+        <button onclick="abrirWhatsAppWebComMensagem()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-bold flex items-center gap-1.5 shadow-sm shadow-emerald-200 transition-all">
+          <i class="fa-brands fa-whatsapp"></i> Abrir WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Assistente IA MM Personalizados -->
+  <div id="modal-assistente-ia" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-purple-100 pb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 via-pink-600 to-amber-500 text-white flex items-center justify-center text-lg shadow-md shadow-purple-200">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-purple-950">Assistente IA MM Personalizados</h3>
+            <p class="text-xs text-purple-600">Consultoria para ateliê, festas e precificação</p>
+          </div>
+        </div>
+        <button onclick="fecharModalAssistenteIA()" class="text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Histórico de Chat -->
+      <div id="chat-historico-ia" class="flex-1 overflow-y-auto min-h-[220px] max-h-[350px] p-3 bg-purple-50/40 rounded-xl space-y-3 border border-purple-100/60 text-xs">
+        <div class="bg-white p-3 rounded-xl border border-purple-100 shadow-2xs space-y-1">
+          <p class="font-bold text-purple-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-sparkles text-amber-500"></i> Olá! Como posso te ajudar hoje?
+          </p>
+          <p class="text-slate-600 leading-relaxed">
+            Sou sua assistente especialista do ateliê. Posso sugerir temas de festas, ideias de lembrancinhas, cálculo de hora trabalhada, dicas de fotos para o Instagram e muito mais!
+          </p>
+        </div>
+      </div>
+
+      <!-- Perguntas Rápidas Sugeridas -->
+      <div class="space-y-1.5">
+        <p class="text-[11px] font-semibold text-slate-500">Perguntas Rápidas Sugeridas:</p>
+        <div class="flex flex-wrap gap-1.5">
+          <button type="button" onclick="usarPerguntaSugeridaIA('Ideias criativas de lembrancinhas para Festa Safari')" class="px-2.5 py-1 bg-purple-100/80 hover:bg-purple-200 text-purple-900 rounded-lg text-[11px] font-medium transition-all">
+            🎈 Ideias Safari
+          </button>
+          <button type="button" onclick="usarPerguntaSugeridaIA('Como calcular meu valor de hora trabalhada no ateliê?')" class="px-2.5 py-1 bg-purple-100/80 hover:bg-purple-200 text-purple-900 rounded-lg text-[11px] font-medium transition-all">
+            ⏱️ Calcular Hora Trabalhada
+          </button>
+          <button type="button" onclick="usarPerguntaSugeridaIA('Dicas para não desperdiçar papel fotográfico e vinil')" class="px-2.5 py-1 bg-purple-100/80 hover:bg-purple-200 text-purple-900 rounded-lg text-[11px] font-medium transition-all">
+            ✂️ Reduzir Desperdício
+          </button>
+        </div>
+      </div>
+
+      <!-- Input Chat -->
+      <form onsubmit="enviarMensagemAssistenteIA(event)" class="flex items-center gap-2 pt-1">
+        <input 
+          type="text" 
+          id="input-chat-assistente-ia" 
+          placeholder="Digite sua dúvida ou pedido de ideias..." 
+          class="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+        />
+        <button 
+          type="submit" 
+          id="btn-enviar-chat-ia" 
+          class="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 shadow-sm shadow-purple-200"
+        >
+          <i class="fa-solid fa-paper-plane"></i> Enviar
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- Botão Flutuante da IA Assistente -->
+  <button 
+    onclick="abrirModalAssistenteIA()" 
+    class="fixed bottom-5 right-5 z-40 bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 hover:from-purple-700 hover:to-amber-600 text-white shadow-xl shadow-purple-500/30 px-4 py-3 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all hover:scale-105 active:scale-95 group"
+    title="Abrir Assistente Inteligente IA"
+  >
+    <span class="relative flex h-2.5 w-2.5">
+      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-200 opacity-75"></span>
+      <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-300"></span>
+    </span>
+    <i class="fa-solid fa-wand-magic-sparkles text-amber-200 text-sm"></i>
+    <span>Assistente IA</span>
+  </button>
+
+    </div>
+  </div>
+
+  <!-- Modal de Confirmação de Exclusão (Substitui confirm para evitar bloqueios de iframe) -->
+  <div id="modal-confirmacao" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+      <div class="flex items-center gap-3 text-rose-600">
+        <div class="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center text-lg shrink-0">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h3 class="font-bold text-lg text-slate-900">Confirmar Exclusão</h3>
+      </div>
+      <p id="modal-confirmacao-texto" class="text-sm text-slate-600">
+        Tem certeza que deseja excluir este item?
+      </p>
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button 
+          type="button"
+          onclick="fecharModalConfirmacao(false)" 
+          class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 font-medium"
+        >
+          Cancelar
+        </button>
+        <button 
+          type="button"
+          onclick="fecharModalConfirmacao(true)" 
+          class="px-4 py-2 rounded-xl bg-rose-600 text-white text-sm hover:bg-rose-700 font-semibold shadow-md shadow-rose-200"
+        >
+          Sim, Excluir
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400 mt-auto">
+    <p>MM Personalizados - Gestão Integrada &bull; Todos os dados mantidos com segurança no seu navegador.</p>
+  </footer>
+
+  <!-- ========================================== -->
+  <!-- LOGICA JAVASCRIPT                          -->
+  <!-- ========================================== -->
+  <script>
+    // LocalStorage Keys
+    const KEY_MATERIAS = 'papelaria_materias_v1';
+    const KEY_PRODUTOS = 'papelaria_produtos_v1';
+    const KEY_PEDIDOS  = 'papelaria_pedidos_v1';
+    const KEY_SEQ      = 'papelaria_seq_pedido_v1';
+
+    // State Variables
+    let materias = [];
+    let produtos = [];
+    let pedidos  = [];
+    let seqPedido = 1;
+    let idPedidoEmEdicao = null;
+
+    // Helper: Formatar Moeda Real (R$)
+    function formatarMoeda(valor) {
+      const num = parseFloat(valor) || 0;
+      return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    // Helper: Formatar Data ISO (YYYY-MM-DD) para BR (DD/MM/YYYY)
+    function formatarDataBR(dataIso) {
+      if (!dataIso) return '-';
+      const parts = dataIso.split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+      return dataIso;
+    }
+
+    // Helper: Formatar Número do Pedido (ex: #0001)
+    function formatarNumeroPedido(num) {
+      return '#' + String(num).padStart(4, '0');
+    }
+
+    // Modal de Confirmação Personalizado (Evita que o window.confirm nativo seja bloqueado em iframes)
+    let confirmacaoCallback = null;
+
+    function solicitarConfirmacao(mensagem, callback) {
+      const modal = document.getElementById('modal-confirmacao');
+      const textoEl = document.getElementById('modal-confirmacao-texto');
+      
+      if (!modal || !textoEl) {
+        console.warn('[Modal Confirmação] Elemento não encontrado. Executando callback diretamente.');
+        if (callback) callback();
+        return;
+      }
+
+      textoEl.textContent = mensagem;
+      confirmacaoCallback = callback;
+      modal.classList.remove('hidden');
+    }
+
+    function fecharModalConfirmacao(confirmado) {
+      const modal = document.getElementById('modal-confirmacao');
+      if (modal) modal.classList.add('hidden');
+
+      if (confirmado && typeof confirmacaoCallback === 'function') {
+        confirmacaoCallback();
+      }
+      confirmacaoCallback = null;
+    }
+
+    // Toast Notification System
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const bgColor = type === 'success' ? 'bg-emerald-600 text-white' : (type === 'error' ? 'bg-rose-600 text-white' : 'bg-slate-800 text-white');
+      const icon = type === 'success' ? 'fa-circle-check' : (type === 'error' ? 'fa-circle-exclamation' : 'fa-info-circle');
+
+      toast.className = `${bgColor} pointer-events-auto px-4 py-3 rounded-xl shadow-lg font-medium text-sm flex items-center gap-3 transition-all duration-300 transform translate-y-2 opacity-0`;
+      toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+
+      container.appendChild(toast);
+
+      // Animate In
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 10);
+
+      // Remove after 3 seconds
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Initialize Application
+    document.addEventListener('DOMContentLoaded', () => {
+      carregarDadosLocalStorage();
+      atualizarEstatisticas();
+      renderTabelaMaterias();
+      atualizarSelectsMateriasProduto();
+      renderTabelaProdutos();
+      atualizarNumeroPedidoDisplay();
+      
+      // Adiciona uma linha inicial padrão no formulário de pedido
+      adicionarLinhaItem();
+      renderTabelaPedidosAtivos();
+      renderHistoricoPedidos();
+    });
+
+    // ----------------------------------------------------
+    // CARREGAR E PERSISTIR NO LOCALSTORAGE
+    // ----------------------------------------------------
+    function carregarDadosLocalStorage() {
+      const storedMaterias = localStorage.getItem(KEY_MATERIAS);
+      const storedProdutos = localStorage.getItem(KEY_PRODUTOS);
+      const storedPedidos  = localStorage.getItem(KEY_PEDIDOS);
+      const storedSeq      = localStorage.getItem(KEY_SEQ);
+
+      if (storedMaterias) {
+        materias = JSON.parse(storedMaterias);
+      } else {
+        // Dados de Exemplo para Primeira Utilização (Seed Data)
+        materias = [
+          { id: 'm1', descricao: 'Papel Fotográfico 180g Glossy A4', valorUnitario: 0.80 },
+          { id: 'm2', descricao: 'Fita de Cetim 22mm (1 metro)', valorUnitario: 0.40 },
+          { id: 'm3', descricao: 'Cola Quente / Bastão', valorUnitario: 0.30 },
+          { id: 'm4', descricao: 'Aplique 3D em Papel Lamicote Dourado', valorUnitario: 1.20 }
+        ];
+        salvarMateriasStorage();
+      }
+
+      if (storedProdutos) {
+        produtos = JSON.parse(storedProdutos);
+      } else {
+        // Produtos Iniciais de Exemplo
+        produtos = [
+          {
+            id: 'p1',
+            nome: 'Caixa Milk Temática 3D',
+            materiaIds: ['m1', 'm2', 'm3', 'm4'],
+            custoTotal: 2.70,
+            precoVenda: 6.75 // 2.70 * 2.5
+          }
+        ];
+        salvarProdutosStorage();
+      }
+
+      if (storedPedidos) {
+        pedidos = JSON.parse(storedPedidos);
+        // Garantir retrocompatibilidade com pedidos sem a propriedade status
+        pedidos.forEach(p => {
+          if (!p.status) p.status = 'finalizado';
+        });
+      } else {
+        pedidos = [];
+      }
+
+      seqPedido = storedSeq ? parseInt(storedSeq, 10) : 1;
+    }
+
+    function salvarMateriasStorage() {
+      localStorage.setItem(KEY_MATERIAS, JSON.stringify(materias));
+      atualizarEstatisticas();
+    }
+
+    function salvarProdutosStorage() {
+      localStorage.setItem(KEY_PRODUTOS, JSON.stringify(produtos));
+      atualizarEstatisticas();
+    }
+
+    function salvarPedidosStorage() {
+      localStorage.setItem(KEY_PEDIDOS, JSON.stringify(pedidos));
+      localStorage.setItem(KEY_SEQ, seqPedido.toString());
+      atualizarEstatisticas();
+    }
+
+    function atualizarEstatisticas() {
+      const pedidosAtivos = pedidos.filter(p => p.status === 'em_aberto');
+
+      document.getElementById('stat-materias-count').textContent = materias.length;
+      document.getElementById('stat-produtos-count').textContent = produtos.length;
+      document.getElementById('stat-pedidos-count').textContent = pedidosAtivos.length;
+
+      document.getElementById('badge-materias-count').textContent = `${materias.length} itens`;
+      document.getElementById('badge-produtos-count').textContent = `${produtos.length} produtos`;
+
+      const badgePedidosNav = document.getElementById('badge-pedidos-ativos-count');
+      if (badgePedidosNav) {
+        if (pedidosAtivos.length > 0) {
+          badgePedidosNav.textContent = pedidosAtivos.length;
+          badgePedidosNav.classList.remove('hidden');
+        } else {
+          badgePedidosNav.classList.add('hidden');
+        }
+      }
+    }
+
+    // ----------------------------------------------------
+    // CONTROLADOR DE ABAS DE NAVEGAÇÃO
+    // ----------------------------------------------------
+    function switchTab(tabId) {
+      // Ocultar todos os conteúdos
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      
+      // Tirar estilo ativo de todos os botões
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-[#6E3B1E]', 'text-white', 'shadow-sm', 'shadow-amber-900/20', 'bg-pink-500');
+        btn.classList.add('text-[#6E3B1E]', 'hover:bg-[#F4ECE1]');
+      });
+
+      // Exibir a aba selecionada
+      const targetTab = document.getElementById(tabId);
+      if (targetTab) {
+        targetTab.classList.remove('hidden');
+      }
+
+      // Destacar o botão ativo
+      const activeBtn = document.getElementById(`nav-${tabId}`);
+      if (activeBtn) {
+        activeBtn.classList.remove('text-[#6E3B1E]', 'hover:bg-[#F4ECE1]');
+        activeBtn.classList.add('bg-[#6E3B1E]', 'text-white', 'shadow-sm', 'shadow-amber-900/20');
+      }
+
+      // Ações específicas ao abrir cada aba
+      if (tabId === 'tab-produtos') {
+        atualizarSelectsMateriasProduto();
+      }
+
+      if (tabId === 'tab-novo-pedido') {
+        atualizarSelectsItensPedido();
+      }
+
+      if (tabId === 'tab-pedidos') {
+        renderTabelaPedidosAtivos();
+      }
+
+      if (tabId === 'tab-historico-pedidos') {
+        renderHistoricoPedidos();
+      }
+    }
+
+    // ----------------------------------------------------
+    // ABA 1: MATÉRIA-PRIMA LOGIC
+    // ----------------------------------------------------
+    function prepararEdicaoMateriaPrima(id) {
+      const mat = materias.find(m => String(m.id) === String(id));
+      if (!mat) return;
+
+      const editIdInput = document.getElementById('mat-id-edit');
+      const descInput = document.getElementById('mat-descricao');
+      const valInput = document.getElementById('mat-valor');
+      const formTitle = document.getElementById('mat-form-title');
+      const btnSubmitText = document.getElementById('btn-mat-submit-text');
+      const btnSubmitIcon = document.getElementById('btn-mat-submit-icon');
+      const btnCancel = document.getElementById('btn-mat-cancel');
+
+      if (editIdInput) editIdInput.value = mat.id;
+      if (descInput) descInput.value = mat.descricao;
+      if (valInput) valInput.value = mat.valorUnitario;
+
+      if (formTitle) {
+        formTitle.innerHTML = `<i class="fa-solid fa-pen-to-square text-amber-500"></i> Editar Matéria-Prima`;
+      }
+      if (btnSubmitText) btnSubmitText.textContent = 'Salvar Alterações';
+      if (btnSubmitIcon) btnSubmitIcon.className = 'fa-solid fa-check';
+      if (btnCancel) btnCancel.classList.remove('hidden');
+
+      if (descInput) descInput.focus();
+    }
+
+    function cancelarEdicaoMateriaPrima() {
+      const editIdInput = document.getElementById('mat-id-edit');
+      const descInput = document.getElementById('mat-descricao');
+      const valInput = document.getElementById('mat-valor');
+      const formTitle = document.getElementById('mat-form-title');
+      const btnSubmitText = document.getElementById('btn-mat-submit-text');
+      const btnSubmitIcon = document.getElementById('btn-mat-submit-icon');
+      const btnCancel = document.getElementById('btn-mat-cancel');
+
+      if (editIdInput) editIdInput.value = '';
+      if (descInput) descInput.value = '';
+      if (valInput) valInput.value = '';
+
+      if (formTitle) {
+        formTitle.innerHTML = `<i class="fa-solid fa-plus-circle text-pink-500"></i> Nova Matéria-Prima`;
+      }
+      if (btnSubmitText) btnSubmitText.textContent = 'Cadastrar Matéria-Prima';
+      if (btnSubmitIcon) btnSubmitIcon.className = 'fa-solid fa-plus';
+      if (btnCancel) btnCancel.classList.add('hidden');
+    }
+
+    function recalcularCustosProdutos() {
+      produtos.forEach(prod => {
+        if (prod.materiasComposicao && Array.isArray(prod.materiasComposicao)) {
+          let novoCusto = 0;
+          prod.materiasComposicao.forEach(comp => {
+            const m = materias.find(mat => String(mat.id) === String(comp.id));
+            if (m) {
+              novoCusto += m.valorUnitario * comp.qtd;
+            }
+          });
+          prod.custoTotal = novoCusto;
+        }
+      });
+    }
+
+    function salvarMateriaPrima(event) {
+      event.preventDefault();
+      
+      const editIdInput = document.getElementById('mat-id-edit');
+      const descInput = document.getElementById('mat-descricao');
+      const valInput  = document.getElementById('mat-valor');
+
+      const idEdicao = editIdInput ? editIdInput.value : '';
+      const descricao = descInput.value.trim();
+      const valorUnitario = parseFloat(valInput.value);
+
+      if (!descricao || isNaN(valorUnitario) || valorUnitario <= 0) {
+        showToast('Preencha a descrição e um valor unitário válido.', 'error');
+        return;
+      }
+
+      if (idEdicao) {
+        const mat = materias.find(m => String(m.id) === String(idEdicao));
+        if (mat) {
+          mat.descricao = descricao;
+          mat.valorUnitario = valorUnitario;
+
+          recalcularCustosProdutos();
+
+          salvarMateriasStorage();
+          salvarProdutosStorage();
+
+          cancelarEdicaoMateriaPrima();
+          renderTabelaMaterias();
+          atualizarSelectsMateriasProduto();
+          renderTabelaProdutos();
+
+          showToast('Matéria-prima alterada com sucesso!');
+          return;
+        }
+      }
+
+      const novaMateria = {
+        id: 'mat_' + Date.now(),
+        descricao,
+        valorUnitario
+      };
+
+      materias.push(novaMateria);
+      salvarMateriasStorage();
+
+      cancelarEdicaoMateriaPrima();
+
+      renderTabelaMaterias();
+      atualizarSelectsMateriasProduto();
+      showToast('Matéria-prima cadastrada com sucesso!');
+    }
+
+    function renderTabelaMaterias() {
+      const tbody = document.getElementById('tbody-materias');
+      const searchEl = document.getElementById('search-materia');
+      const searchTerm = (searchEl ? searchEl.value : '').toLowerCase();
+
+      tbody.innerHTML = '';
+
+      const filtradas = materias.filter(m => m.descricao.toLowerCase().includes(searchTerm));
+
+      const badgeCount = document.getElementById('badge-materias-count');
+      if (badgeCount) {
+        badgeCount.textContent = `${filtradas.length} ${filtradas.length === 1 ? 'item' : 'itens'}`;
+      }
+
+      if (filtradas.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="3" class="text-center py-6 text-slate-400 text-sm italic">
+              Nenhuma matéria-prima encontrada.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      filtradas.forEach(mat => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50/80 transition-colors';
+        tr.innerHTML = `
+          <td class="px-4 py-3 font-medium text-slate-800">${escapeHtml(mat.descricao)}</td>
+          <td class="px-4 py-3 text-right font-semibold text-slate-900">${formatarMoeda(mat.valorUnitario)}</td>
+          <td class="px-4 py-3 text-center">
+            <div class="flex items-center justify-center gap-1">
+              <button 
+                onclick="prepararEdicaoMateriaPrima('${mat.id}')" 
+                class="text-slate-400 hover:text-amber-600 p-1.5 rounded-lg hover:bg-amber-50 transition-all"
+                title="Editar Matéria-Prima"
+              >
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+              <button 
+                onclick="excluirMateriaPrima('${mat.id}')" 
+                class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-all"
+                title="Excluir Matéria-Prima"
+              >
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function excluirMateriaPrima(id) {
+      console.log('[Excluir Matéria-Prima] ID recebido:', id);
+      
+      const mat = materias.find(m => String(m.id) === String(id));
+      if (!mat) {
+        console.warn('[Excluir Matéria-Prima] Item não encontrado no array:', id);
+        showToast('Matéria-prima não encontrada.', 'error');
+        return;
+      }
+
+      const emUso = produtos.some(p => p.materiaIds.includes(String(id)));
+      const mensagem = emUso 
+        ? `Atenção: A matéria-prima "${mat.descricao}" está vinculada a produtos cadastrados. Deseja realmente excluí-la?`
+        : `Deseja excluir a matéria-prima "${mat.descricao}"?`;
+
+      solicitarConfirmacao(mensagem, () => {
+        console.log('[Excluir Matéria-Prima] Confirmado. Removendo ID:', id);
+        materias = materias.filter(m => String(m.id) !== String(id));
+        salvarMateriasStorage();
+        
+        const tbody = document.getElementById('tbody-materias');
+        console.log('[Excluir Matéria-Prima] Atualizando seletor tbody-materias:', tbody);
+        renderTabelaMaterias();
+        atualizarSelectsMateriasProduto();
+        showToast('Matéria-prima excluída!');
+      });
+    }
+
+    // ----------------------------------------------------
+    // ABA 2: PRODUTOS LOGIC
+    // ----------------------------------------------------
+    function atualizarSelectsMateriasProduto() {
+      const selects = [
+        document.getElementById('prod-mat1'),
+        document.getElementById('prod-mat2'),
+        document.getElementById('prod-mat3'),
+        document.getElementById('prod-mat4')
+      ];
+
+      selects.forEach(select => {
+        if (!select) return;
+        const currentVal = select.value;
+
+        select.innerHTML = '<option value="">-- Nenhuma selecionada --</option>';
+
+        materias.forEach(mat => {
+          const opt = document.createElement('option');
+          opt.value = mat.id;
+          opt.textContent = `${mat.descricao} (${formatarMoeda(mat.valorUnitario)})`;
+          select.appendChild(opt);
+        });
+
+        // Manter o valor anterior se ainda existir
+        if (currentVal && materias.some(m => m.id === currentVal)) {
+          select.value = currentVal;
+        }
+      });
+
+      calcularPrecoProduto();
+    }
+
+    function calcularPrecoProduto() {
+      let custoTotal = 0;
+
+      for (let i = 1; i <= 4; i++) {
+        const matSelect = document.getElementById(`prod-mat${i}`);
+        const qtdInput  = document.getElementById(`prod-qtd${i}`);
+
+        if (!matSelect || !qtdInput) continue;
+
+        const matId = matSelect.value;
+        const qtdRaw = parseFloat(qtdInput.value);
+        const qtd = isNaN(qtdRaw) || qtdRaw < 0 ? 0 : qtdRaw;
+
+        if (matId) {
+          const mat = materias.find(m => String(m.id) === String(matId));
+          if (mat) {
+            custoTotal += mat.valorUnitario * qtd;
+          }
+        }
+      }
+
+      // Cálculo do Valor de Venda Sugerido: Margem 150% (Fórmula: Custo Total * 2.5)
+      const valorSugerido = custoTotal * 2.5;
+
+      // Exibir valores na UI
+      document.getElementById('prod-custo-display').textContent = formatarMoeda(custoTotal);
+      document.getElementById('prod-custo-valor').value = custoTotal;
+      document.getElementById('prod-sugerido-display').textContent = formatarMoeda(valorSugerido);
+
+      // Preencher automaticamente o campo editável de Preço de Venda
+      const inputVenda = document.getElementById('prod-venda-input');
+      inputVenda.value = valorSugerido > 0 ? valorSugerido.toFixed(2) : '';
+    }
+
+    function reaplicarMargemSugerida() {
+      const custoTotal = parseFloat(document.getElementById('prod-custo-valor').value) || 0;
+      const valorSugerido = custoTotal * 2.5;
+      document.getElementById('prod-venda-input').value = valorSugerido > 0 ? valorSugerido.toFixed(2) : '0.00';
+      showToast('Margem de 150% reaplicada!');
+    }
+
+    function salvarProduto(event) {
+      event.preventDefault();
+
+      const nomeInput  = document.getElementById('prod-nome');
+      const vendaInput = document.getElementById('prod-venda-input');
+
+      const nome = nomeInput.value.trim();
+      const precoVenda = parseFloat(vendaInput.value);
+      const custoTotal = parseFloat(document.getElementById('prod-custo-valor').value) || 0;
+
+      const materiasComposicao = [];
+      for (let i = 1; i <= 4; i++) {
+        const matSelect = document.getElementById(`prod-mat${i}`);
+        const qtdInput  = document.getElementById(`prod-qtd${i}`);
+        
+        if (!matSelect || !qtdInput) continue;
+
+        const matId = matSelect.value;
+        const qtdRaw = parseFloat(qtdInput.value);
+        const qtd = isNaN(qtdRaw) || qtdRaw <= 0 ? 1 : qtdRaw;
+
+        if (matId) {
+          materiasComposicao.push({ id: String(matId), qtd });
+        }
+      }
+
+      const materiaIds = materiasComposicao.map(m => m.id);
+
+      if (!nome) {
+        showToast('Digite o nome do produto.', 'error');
+        return;
+      }
+
+      if (isNaN(precoVenda) || precoVenda <= 0) {
+        showToast('Defina um preço de venda válido.', 'error');
+        return;
+      }
+
+      const novoProduto = {
+        id: 'prod_' + Date.now(),
+        nome,
+        materiaIds,
+        materiasComposicao,
+        custoTotal,
+        precoVenda
+      };
+
+      produtos.push(novoProduto);
+      salvarProdutosStorage();
+
+      // Reset Form
+      nomeInput.value = '';
+      for (let i = 1; i <= 4; i++) {
+        const select = document.getElementById(`prod-mat${i}`);
+        const input  = document.getElementById(`prod-qtd${i}`);
+        if (select) select.value = '';
+        if (input) input.value = '1';
+      }
+      calcularPrecoProduto();
+
+      renderTabelaProdutos();
+      atualizarSelectsItensPedido();
+      showToast('Produto salvo com sucesso!');
+    }
+
+    function renderTabelaProdutos() {
+      const tbody = document.getElementById('tbody-produtos');
+      tbody.innerHTML = '';
+
+      if (produtos.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4" class="text-center py-6 text-slate-400 text-sm italic">
+              Nenhum produto cadastrado ainda.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      produtos.forEach(prod => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50/80 transition-colors';
+        tr.innerHTML = `
+          <td class="px-4 py-3 font-semibold text-slate-800">${escapeHtml(prod.nome)}</td>
+          <td class="px-4 py-3 text-right text-slate-500 font-medium">${formatarMoeda(prod.custoTotal)}</td>
+          <td class="px-4 py-3 text-right text-emerald-600 font-bold">${formatarMoeda(prod.precoVenda)}</td>
+          <td class="px-4 py-3 text-center">
+            <button 
+              onclick="excluirProduto('${prod.id}')" 
+              class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-all"
+              title="Excluir Produto"
+            >
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function excluirProduto(id) {
+      console.log('[Excluir Produto] ID recebido:', id);
+
+      const prod = produtos.find(p => String(p.id) === String(id));
+      if (!prod) {
+        console.warn('[Excluir Produto] Produto não encontrado no array:', id);
+        showToast('Produto não encontrado.', 'error');
+        return;
+      }
+
+      solicitarConfirmacao(`Deseja excluir o produto "${prod.nome}"?`, () => {
+        console.log('[Excluir Produto] Confirmado. Removendo ID:', id);
+        produtos = produtos.filter(p => String(p.id) !== String(id));
+        salvarProdutosStorage();
+
+        const tbody = document.getElementById('tbody-produtos');
+        console.log('[Excluir Produto] Atualizando seletor tbody-produtos:', tbody);
+        renderTabelaProdutos();
+        atualizarSelectsItensPedido();
+        showToast('Produto excluído!');
+      });
+    }
+
+    // ----------------------------------------------------
+    // ABA 3: NOVO PEDIDO LOGIC
+    // ----------------------------------------------------
+    function atualizarNumeroPedidoDisplay() {
+      document.getElementById('pedido-numero-display').textContent = formatarNumeroPedido(seqPedido);
+    }
+
+    function adicionarLinhaItem(produtoId = '', quantidade = 1, valorUnitario = null) {
+      const tbody = document.getElementById('tbody-itens-pedido');
+      document.getElementById('msg-sem-itens').classList.add('hidden');
+
+      const tr = document.createElement('tr');
+      tr.className = 'linha-item-pedido border-b border-slate-100 hover:bg-slate-50/50';
+
+      const prodSelecionado = produtos.find(p => p.id === produtoId);
+      const precoInicial = valorUnitario !== null ? valorUnitario : (prodSelecionado ? prodSelecionado.precoVenda : 0);
+
+      tr.innerHTML = `
+        <td class="px-3 py-2">
+          <input 
+            type="number" 
+            min="1" 
+            value="${quantidade}" 
+            onchange="recalcularLinhaItem(this)" 
+            oninput="recalcularLinhaItem(this)"
+            class="item-qtd w-20 px-2 py-1.5 rounded-lg border border-slate-200 text-center text-sm font-semibold focus:outline-none focus:border-emerald-500"
+          />
+        </td>
+        <td class="px-3 py-2">
+          <select 
+            onchange="aoSelecionarProdutoItem(this)" 
+            class="item-prod-select w-full px-3 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-emerald-500 bg-white"
+          >
+            <option value="">-- Selecione o Produto --</option>
+            ${produtos.map(p => `<option value="${p.id}" ${p.id === produtoId ? 'selected' : ''}>${escapeHtml(p.nome)} (${formatarMoeda(p.precoVenda)})</option>`).join('')}
+          </select>
+        </td>
+        <td class="px-3 py-2 text-right">
+          <input 
+            type="number" 
+            step="0.01" 
+            min="0" 
+            value="${precoInicial ? precoInicial.toFixed(2) : ''}" 
+            onchange="recalcularLinhaItem(this)" 
+            oninput="recalcularLinhaItem(this)"
+            placeholder="0.00"
+            class="item-unitario w-28 px-2 py-1.5 rounded-lg border border-slate-200 text-right text-sm font-medium focus:outline-none focus:border-emerald-500"
+          />
+        </td>
+        <td class="px-3 py-2 text-right font-bold text-emerald-600 item-total-display">
+          ${formatarMoeda(quantidade * precoInicial)}
+        </td>
+        <td class="px-3 py-2 text-center">
+          <button 
+            type="button" 
+            onclick="removerLinhaItem(this)" 
+            class="text-slate-400 hover:text-rose-600 p-1 rounded-lg hover:bg-rose-50"
+            title="Remover linha"
+          >
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </td>
+      `;
+
+      tbody.appendChild(tr);
+      calcularTotalPedido();
+    }
+
+    function removerLinhaItem(btn) {
+      const tr = btn.closest('tr');
+      tr.remove();
+
+      const tbody = document.getElementById('tbody-itens-pedido');
+      if (tbody.children.length === 0) {
+        document.getElementById('msg-sem-itens').classList.remove('hidden');
+      }
+
+      calcularTotalPedido();
+    }
+
+    function aoSelecionarProdutoItem(selectEl) {
+      const tr = selectEl.closest('tr');
+      const prodId = selectEl.value;
+      const inputUnitario = tr.querySelector('.item-unitario');
+
+      const prod = produtos.find(p => p.id === prodId);
+      if (prod) {
+        inputUnitario.value = prod.precoVenda.toFixed(2);
+      } else {
+        inputUnitario.value = '';
+      }
+
+      recalcularLinhaItem(selectEl);
+    }
+
+    function recalcularLinhaItem(elementInsideTr) {
+      const tr = elementInsideTr.closest('tr');
+      const inputQtd = tr.querySelector('.item-qtd');
+      const inputUnitario = tr.querySelector('.item-unitario');
+      const totalDisplay = tr.querySelector('.item-total-display');
+
+      const qtd = parseInt(inputQtd.value, 10) || 0;
+      const unit = parseFloat(inputUnitario.value) || 0;
+
+      const totalItem = qtd * unit;
+      totalDisplay.textContent = formatarMoeda(totalItem);
+
+      calcularTotalPedido();
+    }
+
+    function calcularTotalPedido() {
+      const linhas = document.querySelectorAll('.linha-item-pedido');
+      let totalGeral = 0;
+
+      linhas.forEach(tr => {
+        const inputQtd = tr.querySelector('.item-qtd');
+        const inputUnitario = tr.querySelector('.item-unitario');
+
+        const qtd = parseInt(inputQtd.value, 10) || 0;
+        const unit = parseFloat(inputUnitario.value) || 0;
+
+        totalGeral += (qtd * unit);
+      });
+
+      document.getElementById('pedido-total-display').textContent = formatarMoeda(totalGeral);
+      return totalGeral;
+    }
+
+    function atualizarSelectsItensPedido() {
+      const selects = document.querySelectorAll('.item-prod-select');
+      selects.forEach(select => {
+        const currentVal = select.value;
+        select.innerHTML = '<option value="">-- Selecione o Produto --</option>';
+
+        produtos.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = `${p.nome} (${formatarMoeda(p.precoVenda)})`;
+          select.appendChild(opt);
+        });
+
+        if (currentVal && produtos.some(p => p.id === currentVal)) {
+          select.value = currentVal;
+        }
+      });
+    }
+
+    function salvarOuGerarPedido(event) {
+      event.preventDefault();
+
+      const clienteInput = document.getElementById('pedido-cliente');
+      const dataEntregaInput = document.getElementById('pedido-data-entrega');
+      const pagamentoSelect = document.getElementById('pedido-pagamento');
+      const obsInput = document.getElementById('pedido-obs');
+
+      const cliente = clienteInput.value.trim();
+      const dataEntrega = dataEntregaInput ? dataEntregaInput.value : '';
+      const formaPagamento = pagamentoSelect.value;
+      const observacoes = obsInput.value.trim();
+
+      if (!cliente) {
+        showToast('Informe o nome do cliente.', 'error');
+        return;
+      }
+
+      const linhas = document.querySelectorAll('.linha-item-pedido');
+      if (linhas.length === 0) {
+        showToast('Adicione pelo menos um item ao pedido.', 'error');
+        return;
+      }
+
+      const itens = [];
+      let totalCalculado = 0;
+      let temProdutoValido = false;
+
+      linhas.forEach(tr => {
+        const prodSelect = tr.querySelector('.item-prod-select');
+        const inputQtd = tr.querySelector('.item-qtd');
+        const inputUnitario = tr.querySelector('.item-unitario');
+
+        const prodId = prodSelect.value;
+        const quantidade = parseInt(inputQtd.value, 10) || 0;
+        const valorUnitario = parseFloat(inputUnitario.value) || 0;
+
+        if (prodId && quantidade > 0) {
+          temProdutoValido = true;
+          const prod = produtos.find(p => p.id === prodId);
+          const produtoNome = prod ? prod.nome : 'Produto Customizado';
+          const valorTotal = quantidade * valorUnitario;
+
+          totalCalculado += valorTotal;
+
+          itens.push({
+            produtoId: prodId,
+            produtoNome,
+            quantidade,
+            valorUnitario,
+            valorTotal
+          });
+        }
+      });
+
+      if (!temProdutoValido) {
+        showToast('Selecione os produtos nas linhas do pedido.', 'error');
+        return;
+      }
+
+      if (idPedidoEmEdicao) {
+        // MODO ALTERAÇÃO DE PEDIDO
+        const ped = pedidos.find(p => p.id === idPedidoEmEdicao);
+        if (ped) {
+          ped.cliente = cliente;
+          ped.dataEntrega = dataEntrega;
+          ped.formaPagamento = formaPagamento;
+          ped.observacoes = observacoes;
+          ped.itens = itens;
+          ped.valorTotal = totalCalculado;
+          ped.dataAtualizacao = new Date().toLocaleString('pt-BR');
+
+          showToast(`Pedido ${ped.numero} alterado com sucesso!`);
+        }
+        cancelarEdicaoPedido();
+      } else {
+        // MODO NOVO PEDIDO EM ABERTO
+        const numeroPedidoFormatted = formatarNumeroPedido(seqPedido);
+
+        const novoPedido = {
+          id: 'ped_' + Date.now(),
+          numero: numeroPedidoFormatted,
+          cliente,
+          dataEntrega,
+          data: new Date().toLocaleString('pt-BR'),
+          status: 'em_aberto',
+          itens,
+          valorTotal: totalCalculado,
+          formaPagamento,
+          observacoes
+        };
+
+        pedidos.unshift(novoPedido);
+        seqPedido++;
+
+        // Reset Formulário
+        clienteInput.value = '';
+        if (dataEntregaInput) dataEntregaInput.value = '';
+        obsInput.value = '';
+        document.getElementById('tbody-itens-pedido').innerHTML = '';
+        adicionarLinhaItem();
+        atualizarNumeroPedidoDisplay();
+
+        showToast(`Pedido ${numeroPedidoFormatted} gerado! Disponível na aba 4. Pedidos.`);
+      }
+
+      salvarPedidosStorage();
+      renderTabelaPedidosAtivos();
+      renderHistoricoPedidos();
+
+      // Muda automaticamente para a Aba 4 (Pedidos)
+      switchTab('tab-pedidos');
+    }
+
+    function carregarPedidoParaEdicao(id) {
+      const ped = pedidos.find(p => p.id === id);
+      if (!ped) {
+        showToast('Pedido não encontrado.', 'error');
+        return;
+      }
+
+      idPedidoEmEdicao = id;
+
+      // Preencher campos
+      document.getElementById('pedido-cliente').value = ped.cliente;
+      if (document.getElementById('pedido-data-entrega')) {
+        document.getElementById('pedido-data-entrega').value = ped.dataEntrega || '';
+      }
+      document.getElementById('pedido-pagamento').value = ped.formaPagamento;
+      document.getElementById('pedido-obs').value = ped.observacoes || '';
+      document.getElementById('pedido-numero-display').textContent = ped.numero;
+
+      // Preencher linhas de itens
+      const tbody = document.getElementById('tbody-itens-pedido');
+      tbody.innerHTML = '';
+
+      if (ped.itens && ped.itens.length > 0) {
+        ped.itens.forEach(item => {
+          adicionarLinhaItem(item.produtoId, item.quantidade, item.valorUnitario);
+        });
+      } else {
+        adicionarLinhaItem();
+      }
+
+      // Atualizar Banner e Botão
+      const banner = document.getElementById('banner-edicao-pedido');
+      const numeroSpan = document.getElementById('edicao-pedido-numero');
+      const btnTexto = document.getElementById('btn-submit-pedido-texto');
+      const btnIcon = document.getElementById('btn-submit-pedido-icon');
+
+      if (banner) banner.classList.remove('hidden');
+      if (numeroSpan) numeroSpan.textContent = ped.numero;
+      if (btnTexto) btnTexto.textContent = 'Salvar Alterações do Pedido';
+      if (btnIcon) btnIcon.className = 'fa-solid fa-floppy-disk';
+
+      switchTab('tab-novo-pedido');
+      showToast(`Carregando pedido ${ped.numero} para edição...`);
+    }
+
+    function cancelarEdicaoPedido() {
+      idPedidoEmEdicao = null;
+
+      const banner = document.getElementById('banner-edicao-pedido');
+      const btnTexto = document.getElementById('btn-submit-pedido-texto');
+      const btnIcon = document.getElementById('btn-submit-pedido-icon');
+
+      if (banner) banner.classList.add('hidden');
+      if (btnTexto) btnTexto.textContent = 'Gerar Pedido';
+      if (btnIcon) btnIcon.className = 'fa-solid fa-cart-plus';
+
+      const clienteInput = document.getElementById('pedido-cliente');
+      const dataEntregaInput = document.getElementById('pedido-data-entrega');
+      const obsInput = document.getElementById('pedido-obs');
+      if (clienteInput) clienteInput.value = '';
+      if (dataEntregaInput) dataEntregaInput.value = '';
+      if (obsInput) obsInput.value = '';
+
+      document.getElementById('tbody-itens-pedido').innerHTML = '';
+      adicionarLinhaItem();
+      atualizarNumeroPedidoDisplay();
+    }
+
+    function novaOrdemEIrParaForm() {
+      cancelarEdicaoPedido();
+      switchTab('tab-novo-pedido');
+    }
+
+    function finalizarPedidoAtivo(id) {
+      const ped = pedidos.find(p => p.id === id);
+      if (!ped) return;
+
+      solicitarConfirmacao(`Deseja realmente finalizar o pedido ${ped.numero} (${ped.cliente}) e movê-lo para o histórico?`, () => {
+        ped.status = 'finalizado';
+        ped.dataFinalizacao = new Date().toLocaleString('pt-BR');
+
+        salvarPedidosStorage();
+        renderTabelaPedidosAtivos();
+        renderHistoricoPedidos();
+
+        showToast(`Pedido ${ped.numero} finalizado com sucesso!`);
+        abrirModalPedido(id);
+      });
+    }
+
+    function excluirPedidoAtivo(id) {
+      const ped = pedidos.find(p => p.id === id);
+      if (!ped) return;
+
+      solicitarConfirmacao(`Deseja excluir o pedido ${ped.numero} em aberto?`, () => {
+        pedidos = pedidos.filter(p => p.id !== id);
+        salvarPedidosStorage();
+        renderTabelaPedidosAtivos();
+        renderHistoricoPedidos();
+        showToast(`Pedido ${ped.numero} excluído.`);
+      });
+    }
+
+    // ----------------------------------------------------
+    // ABA 4: PEDIDOS EM ABERTO LOGIC
+    // ----------------------------------------------------
+    function limparFiltrosPedidosAtivos() {
+      const busca = document.getElementById('filtro-pedido-busca');
+      const pagamento = document.getElementById('filtro-pedido-pagamento');
+      const entrega = document.getElementById('filtro-pedido-entrega');
+      const ordem = document.getElementById('filtro-pedido-ordem');
+
+      if (busca) busca.value = '';
+      if (pagamento) pagamento.value = '';
+      if (entrega) entrega.value = 'todas';
+      if (ordem) ordem.value = 'criacao_desc';
+
+      renderTabelaPedidosAtivos();
+    }
+
+    function renderTabelaPedidosAtivos() {
+      const tbody = document.getElementById('tbody-pedidos-ativos');
+      if (!tbody) return;
+
+      tbody.innerHTML = '';
+      let ativos = pedidos.filter(p => p.status === 'em_aberto');
+      const totalSemFiltro = ativos.length;
+
+      // Obter valores dos filtros
+      const buscaVal = (document.getElementById('filtro-pedido-busca')?.value || '').toLowerCase().trim();
+      const pagamentoVal = document.getElementById('filtro-pedido-pagamento')?.value || '';
+      const entregaVal = document.getElementById('filtro-pedido-entrega')?.value || 'todas';
+      const ordemVal = document.getElementById('filtro-pedido-ordem')?.value || 'criacao_desc';
+
+      // 1. Filtro por Busca Textual
+      if (buscaVal) {
+        ativos = ativos.filter(ped => {
+          const clienteMatch = ped.cliente && ped.cliente.toLowerCase().includes(buscaVal);
+          const numeroMatch = ped.numero && ped.numero.toLowerCase().includes(buscaVal);
+          const obsMatch = ped.observacoes && ped.observacoes.toLowerCase().includes(buscaVal);
+          const itemMatch = ped.itens && ped.itens.some(i => i.produtoNome && i.produtoNome.toLowerCase().includes(buscaVal));
+          return clienteMatch || numeroMatch || obsMatch || itemMatch;
+        });
+      }
+
+      // 2. Filtro Forma de Pagamento
+      if (pagamentoVal) {
+        ativos = ativos.filter(ped => ped.formaPagamento === pagamentoVal);
+      }
+
+      // 3. Filtro Data de Entrega
+      if (entregaVal !== 'todas') {
+        const hojeStr = new Date().toISOString().split('T')[0];
+        const hojeDate = new Date();
+        hojeDate.setHours(0,0,0,0);
+
+        const em7Dias = new Date(hojeDate);
+        em7Dias.setDate(em7Dias.getDate() + 7);
+
+        ativos = ativos.filter(ped => {
+          if (entregaVal === 'com_data') return !!ped.dataEntrega;
+          if (entregaVal === 'sem_data') return !ped.dataEntrega;
+          if (entregaVal === 'hoje') return ped.dataEntrega === hojeStr;
+          if (entregaVal === 'proximos_7') {
+            if (!ped.dataEntrega) return false;
+            const [ano, mes, dia] = ped.dataEntrega.split('-').map(Number);
+            const dataPed = new Date(ano, mes - 1, dia);
+            return dataPed >= hojeDate && dataPed <= em7Dias;
+          }
+          return true;
+        });
+      }
+
+      // 4. Ordenação
+      ativos.sort((a, b) => {
+        if (ordemVal === 'entrega_asc') {
+          if (!a.dataEntrega && !b.dataEntrega) return 0;
+          if (!a.dataEntrega) return 1;
+          if (!b.dataEntrega) return -1;
+          return a.dataEntrega.localeCompare(b.dataEntrega);
+        }
+        if (ordemVal === 'criacao_asc') {
+          return String(a.id).localeCompare(String(b.id));
+        }
+        if (ordemVal === 'criacao_desc') {
+          return String(b.id).localeCompare(String(a.id));
+        }
+        if (ordemVal === 'cliente_asc') {
+          return (a.cliente || '').localeCompare(b.cliente || '');
+        }
+        if (ordemVal === 'valor_desc') {
+          return (b.valorTotal || 0) - (a.valorTotal || 0);
+        }
+        if (ordemVal === 'valor_asc') {
+          return (a.valorTotal || 0) - (b.valorTotal || 0);
+        }
+        return 0;
+      });
+
+      // Atualizar Contador
+      const contadorEl = document.getElementById('info-contador-pedidos-ativos');
+      if (contadorEl) {
+        if (totalSemFiltro === 0) {
+          contadorEl.textContent = 'Nenhum pedido em aberto registrado.';
+        } else if (ativos.length === totalSemFiltro) {
+          contadorEl.innerHTML = `Mostrando todos os <strong>${totalSemFiltro}</strong> pedidos em aberto.`;
+        } else {
+          contadorEl.innerHTML = `Exibindo <strong>${ativos.length}</strong> de <strong>${totalSemFiltro}</strong> pedidos filtrados.`;
+        }
+      }
+
+      if (ativos.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="text-center py-8 text-slate-400 text-sm">
+              <div class="flex flex-col items-center justify-center gap-2">
+                <i class="fa-solid fa-filter-circle-xmark text-3xl text-slate-300"></i>
+                <p class="font-medium">${totalSemFiltro === 0 ? 'Nenhum pedido em aberto no momento.' : 'Nenhum pedido encontrado para os filtros selecionados.'}</p>
+                ${totalSemFiltro > 0 ? `
+                  <button onclick="limparFiltrosPedidosAtivos()" class="mt-1 text-xs text-amber-700 font-bold hover:underline">
+                    Limpar filtros de busca
+                  </button>
+                ` : `
+                  <button onclick="novaOrdemEIrParaForm()" class="mt-1 text-xs text-emerald-600 font-bold hover:underline">
+                    + Clique aqui para criar um novo pedido
+                  </button>
+                `}
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      ativos.forEach(ped => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50/80 transition-colors';
+
+        const resumoItens = ped.itens ? ped.itens.map(i => `${i.quantidade}x ${escapeHtml(i.produtoNome)}`).join(', ') : '';
+
+        tr.innerHTML = `
+          <td class="px-4 py-3 font-bold text-indigo-700">${escapeHtml(ped.numero)}</td>
+          <td class="px-4 py-3 font-semibold text-slate-800">${escapeHtml(ped.cliente)}</td>
+          <td class="px-4 py-3 text-slate-500 text-xs">${escapeHtml(ped.data)}</td>
+          <td class="px-4 py-3 text-xs">
+            ${ped.dataEntrega ? `<span class="px-2 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200/80 font-bold inline-flex items-center gap-1"><i class="fa-regular fa-calendar-check text-amber-600"></i>${formatarDataBR(ped.dataEntrega)}</span>` : '<span class="text-slate-400">-</span>'}
+          </td>
+          <td class="px-4 py-3 text-xs text-slate-600 max-w-xs truncate" title="${resumoItens}">
+            ${resumoItens || 'Sem itens'}
+          </td>
+          <td class="px-4 py-3">
+            <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+              ${escapeHtml(ped.formaPagamento)}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-right font-bold text-slate-900">${formatarMoeda(ped.valorTotal)}</td>
+          <td class="px-4 py-3 text-center">
+            <div class="flex items-center justify-center gap-1">
+              <button 
+                onclick="carregarPedidoParaEdicao('${ped.id}')" 
+                class="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 font-semibold text-xs flex items-center gap-1 transition-all border border-amber-200"
+                title="Alterar/Editar Pedido"
+              >
+                <i class="fa-solid fa-pen-to-square"></i>
+                Alterar
+              </button>
+              <button 
+                onclick="finalizarPedidoAtivo('${ped.id}')" 
+                class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs flex items-center gap-1 transition-all shadow-sm shadow-emerald-200"
+                title="Finalizar e Mover para Histórico"
+              >
+                <i class="fa-solid fa-circle-check"></i>
+                Finalizar
+              </button>
+              <button 
+                onclick="abrirModalPedido('${ped.id}')" 
+                class="text-blue-600 hover:text-blue-800 p-1.5 rounded-lg hover:bg-blue-50"
+                title="Ver Detalhes / Imprimir Comprovante"
+              >
+                <i class="fa-solid fa-file-invoice"></i>
+              </button>
+              <button 
+                onclick="excluirPedidoAtivo('${ped.id}')" 
+                class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50"
+                title="Excluir Pedido em Aberto"
+              >
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // ----------------------------------------------------
+    // HISTÓRICO DE PEDIDOS LOGIC & MODAL DE IMPRESSÃO
+    // ----------------------------------------------------
+    function renderHistoricoPedidos() {
+      const tbody = document.getElementById('tbody-historico');
+      if (!tbody) return;
+
+      tbody.innerHTML = '';
+      let finalizados = pedidos.filter(p => p.status === 'finalizado' || !p.status);
+      const totalSemFiltro = finalizados.length;
+
+      const buscaVal = (document.getElementById('filtro-historico-busca')?.value || '').toLowerCase().trim();
+      if (buscaVal) {
+        finalizados = finalizados.filter(ped => {
+          const clienteMatch = ped.cliente && ped.cliente.toLowerCase().includes(buscaVal);
+          const numeroMatch = ped.numero && ped.numero.toLowerCase().includes(buscaVal);
+          return clienteMatch || numeroMatch;
+        });
+      }
+
+      const contadorEl = document.getElementById('info-contador-historico');
+      if (contadorEl) {
+        if (totalSemFiltro === 0) {
+          contadorEl.textContent = 'Nenhum pedido finalizado ainda.';
+        } else if (finalizados.length === totalSemFiltro) {
+          contadorEl.innerHTML = `Total de <strong>${totalSemFiltro}</strong> pedidos finalizados.`;
+        } else {
+          contadorEl.innerHTML = `Exibindo <strong>${finalizados.length}</strong> de <strong>${totalSemFiltro}</strong> no histórico.`;
+        }
+      }
+
+      if (finalizados.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center py-6 text-slate-400 text-sm italic">
+              ${totalSemFiltro === 0 ? 'Nenhum pedido finalizado no histórico ainda.' : 'Nenhum pedido encontrado no histórico para a busca.'}
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      finalizados.forEach(ped => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50/80 transition-colors';
+        tr.innerHTML = `
+          <td class="px-4 py-3 font-bold text-emerald-700">${escapeHtml(ped.numero)}</td>
+          <td class="px-4 py-3 font-semibold text-slate-800">${escapeHtml(ped.cliente)}</td>
+          <td class="px-4 py-3 text-slate-500 text-xs">${escapeHtml(ped.dataFinalizacao || ped.data)}</td>
+          <td class="px-4 py-3">
+            <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+              ${escapeHtml(ped.formaPagamento)}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-right font-bold text-slate-900">${formatarMoeda(ped.valorTotal)}</td>
+          <td class="px-4 py-3 text-center space-x-1">
+            <button 
+              onclick="abrirModalPedido('${ped.id}')" 
+              class="text-blue-600 hover:text-blue-800 p-1.5 rounded-lg hover:bg-blue-50"
+              title="Ver detalhes / Imprimir"
+            >
+              <i class="fa-solid fa-file-invoice"></i>
+            </button>
+            <button 
+              onclick="excluirPedido('${ped.id}')" 
+              class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50"
+              title="Excluir Pedido"
+            >
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    let idPedidoModalAtivo = null;
+
+    function abrirModalPedido(pedidoId) {
+      idPedidoModalAtivo = pedidoId;
+      const ped = pedidos.find(p => String(p.id) === String(pedidoId));
+      if (!ped) return;
+
+      const container = document.getElementById('modal-pedido-conteudo');
+      container.innerHTML = `
+        <div class="text-center bg-[#FAF6F0] p-3 rounded-xl border border-[#EEDCC8] mb-3">
+          <img src="/logo.jpg" alt="MM Personalizados" class="h-12 w-auto mx-auto mb-1 object-contain" />
+          <p class="text-xs font-bold text-[#8C522B]">MM Personalizados &bull; Pedido <span class="text-[#5B3219]">${escapeHtml(ped.numero)}</span></p>
+        </div>
+
+        <div class="border-b border-[#EEDCC8] pb-3 space-y-1.5">
+          <div class="flex justify-between items-center">
+            <span class="text-xs text-slate-500 font-semibold">Cliente:</span>
+            <span class="font-bold text-[#5B3219]">${escapeHtml(ped.cliente)}</span>
+          </div>
+          <div class="flex justify-between items-center text-xs text-slate-500">
+            <span>Data de Entrega:</span>
+            <span class="font-bold text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">${ped.dataEntrega ? formatarDataBR(ped.dataEntrega) : 'Não informada'}</span>
+          </div>
+          <div class="flex justify-between items-center text-xs text-slate-400">
+            <span>Data de Criação:</span>
+            <span>${escapeHtml(ped.data)}</span>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="font-bold text-xs uppercase tracking-wider text-slate-500 mb-2">Itens Solicitados</h4>
+          <div class="border border-slate-100 rounded-xl overflow-hidden">
+            <table class="w-full text-xs text-left">
+              <thead class="bg-slate-50 text-slate-600 font-semibold">
+                <tr>
+                  <th class="p-2">Qtd</th>
+                  <th class="p-2">Item</th>
+                  <th class="p-2 text-right">Unit.</th>
+                  <th class="p-2 text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                ${ped.itens.map(item => `
+                  <tr>
+                    <td class="p-2 font-semibold text-center">${item.quantidade}</td>
+                    <td class="p-2 font-medium text-slate-800">${escapeHtml(item.produtoNome)}</td>
+                    <td class="p-2 text-right text-slate-500">${formatarMoeda(item.valorUnitario)}</td>
+                    <td class="p-2 text-right font-bold text-slate-800">${formatarMoeda(item.valorTotal)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-1 text-xs">
+          <div class="flex justify-between">
+            <span class="text-slate-500">Forma de Pagamento:</span>
+            <span class="font-bold text-slate-800">${escapeHtml(ped.formaPagamento)}</span>
+          </div>
+          ${ped.observacoes ? `
+            <div class="border-t border-slate-200/60 pt-2 mt-2">
+              <span class="text-slate-500 block mb-0.5">Observações:</span>
+              <p class="text-slate-700 italic">${escapeHtml(ped.observacoes)}</p>
+            </div>
+          ` : ''}
+        </div>
+
+        <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+          <span class="text-sm font-bold text-slate-700">VALOR TOTAL:</span>
+          <span class="text-xl font-extrabold text-emerald-600">${formatarMoeda(ped.valorTotal)}</span>
+        </div>
+      `;
+
+      document.getElementById('modal-pedido').classList.remove('hidden');
+    }
+
+    function fecharModalPedido() {
+      document.getElementById('modal-pedido').classList.add('hidden');
+    }
+
+    function gerarHTMLComprovante(ped) {
+      return `
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+          <meta charset="UTF-8">
+          <title>Comprovante - Pedido ${escapeHtml(ped.numero)} - MM Personalizados</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 24px; color: #3b2213; max-width: 600px; margin: 0 auto; background: #fff; }
+            .header { text-align: center; border-bottom: 2px dashed #db2777; padding-bottom: 14px; margin-bottom: 16px; }
+            .header img { height: 72px; width: auto; margin: 0 auto 8px auto; display: block; object-fit: contain; }
+            .header h1 { margin: 0; color: #5b3219; font-size: 22px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+            .header p { margin: 4px 0 0 0; color: #8c522b; font-size: 13px; font-weight: 700; }
+            .info-card { background: #faf6f0; border: 1px solid #eedcc8; border-radius: 10px; padding: 12px 16px; font-size: 13px; margin-bottom: 16px; }
+            .info-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+            .info-row:last-child { margin-bottom: 0; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; }
+            th { background: #f4ece1; color: #5b3219; text-align: left; padding: 8px 10px; font-weight: 700; border-bottom: 2px solid #eedcc8; }
+            td { padding: 8px 10px; border-bottom: 1px solid #f4ece1; }
+            .total-box { text-align: right; font-size: 16px; font-weight: 800; color: #5b3219; padding: 12px; background: #faf0e6; border: 1px solid #eedcc8; border-radius: 10px; margin-top: 12px; }
+            .obs-box { font-size: 12px; background: #faf6f0; border: 1px solid #eedcc8; padding: 10px; border-radius: 8px; margin-bottom: 12px; }
+            .footer { text-align: center; margin-top: 24px; font-size: 12px; color: #8c522b; border-top: 1px solid #f4ece1; padding-top: 12px; font-weight: 600; }
+            @media print {
+              .btn-print-action { display: none !important; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <img src="/logo.jpg" alt="MM Personalizados" />
+            <h1>MM Personalizados</h1>
+            <p>Comprovante do Pedido ${escapeHtml(ped.numero)}</p>
+          </div>
+
+          <div class="info-card">
+            <div class="info-row">
+              <span><strong>Cliente:</strong> ${escapeHtml(ped.cliente)}</span>
+              <span><strong>Data de Criação:</strong> ${escapeHtml(ped.data)}</span>
+            </div>
+            <div class="info-row">
+              <span><strong>Data de Entrega:</strong> ${ped.dataEntrega ? formatarDataBR(ped.dataEntrega) : 'Não informada'}</span>
+              <span><strong>Forma de Pagamento:</strong> ${escapeHtml(ped.formaPagamento)}</span>
+            </div>
+            <div class="info-row">
+              <span><strong>Status:</strong> ${ped.status === 'em_aberto' ? 'Em Aberto' : 'Finalizado'}</span>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 40px; text-align: center;">Qtd</th>
+                <th>Item</th>
+                <th style="text-align: right;">Valor Unit.</th>
+                <th style="text-align: right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${ped.itens.map(item => `
+                <tr>
+                  <td style="text-align: center; font-weight: bold;">${item.quantidade}</td>
+                  <td>${escapeHtml(item.produtoNome)}</td>
+                  <td style="text-align: right;">${formatarMoeda(item.valorUnitario)}</td>
+                  <td style="text-align: right; font-weight: bold;">${formatarMoeda(item.valorTotal)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          ${ped.observacoes ? `
+            <div class="obs-box">
+              <strong>Observações:</strong> ${escapeHtml(ped.observacoes)}
+            </div>
+          ` : ''}
+
+          <div class="total-box">
+            VALOR TOTAL: ${formatarMoeda(ped.valorTotal)}
+          </div>
+
+          <div class="footer">
+            Obrigado pela preferência! &bull; MM Personalizados
+          </div>
+
+          <div class="btn-print-action" style="text-align: center; margin-top: 20px;">
+            <button onclick="window.print()" style="background: #ec4899; color: white; border: none; padding: 12px 24px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 14px;">
+              🖨️ Imprimir / Salvar em PDF
+            </button>
+          </div>
+
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+              }, 300);
+            };
+          <\/script>
+        </body>
+        </html>
+      `;
+    }
+
+    function imprimirComprovante() {
+      if (!idPedidoModalAtivo) {
+        window.print();
+        return;
+      }
+
+      const ped = pedidos.find(p => String(p.id) === String(idPedidoModalAtivo));
+
+      // Detectar se a aplicação está rodando em um iframe de preview
+      let isInIframe = false;
+      try {
+        isInIframe = window.self !== window.top;
+      } catch (e) {
+        isInIframe = true;
+      }
+
+      if (isInIframe && ped) {
+        // Em ambientes de iframe (preview), window.print() direto pode ser bloqueado pela política do navegador.
+        // Abrimos uma janela formatada dedicada que dispara o diálogo de impressão de forma garantida.
+        const win = window.open('', '_blank');
+        if (win) {
+          win.document.write(gerarHTMLComprovante(ped));
+          win.document.close();
+        } else {
+          window.focus();
+          window.print();
+        }
+      } else {
+        // Em abas independentes ou navegação normal, dispara o window.print() diretamente na página
+        try {
+          window.focus();
+          window.print();
+        } catch (e) {
+          if (ped) {
+            const win = window.open('', '_blank');
+            if (win) {
+              win.document.write(gerarHTMLComprovante(ped));
+              win.document.close();
+            }
+          }
+        }
+      }
+    }
+
+    function excluirPedido(id) {
+      console.log('[Excluir Pedido] ID recebido:', id);
+
+      const ped = pedidos.find(p => String(p.id) === String(id));
+      if (!ped) {
+        console.warn('[Excluir Pedido] Pedido não encontrado:', id);
+        return;
+      }
+
+      solicitarConfirmacao(`Deseja realmente excluir o pedido ${ped.numero} do histórico?`, () => {
+        console.log('[Excluir Pedido] Confirmado. Removendo ID:', id);
+        pedidos = pedidos.filter(p => String(p.id) !== String(id));
+        salvarPedidosStorage();
+        renderHistoricoPedidos();
+        showToast('Pedido removido do histórico!');
+      });
+    }
+
+    // Security Helper: Escape HTML string
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // ==========================================
+    // INTEGRAÇÃO COM GEMINI IA (FULL-STACK)
+    // ==========================================
+
+    // 1. Gerar Legenda & Dicas para Produto
+    async function gerarInformacoesProdutoIA() {
+      const nomeInput = document.getElementById('prod-nome-input');
+      const nomeProduto = nomeInput ? nomeInput.value.trim() : '';
+
+      const custoEl = document.getElementById('prod-custo-total');
+      const custoText = custoEl ? custoEl.textContent.replace('R$', '').replace('.', '').replace(',', '.').trim() : '0';
+      const custoMaterial = parseFloat(custoText) || 0;
+
+      const vendaInput = document.getElementById('prod-venda-input');
+      const precoSugerido = parseFloat(vendaInput ? vendaInput.value : 0) || 0;
+
+      // Materiais selecionados no formulário de produto
+      const listaMateriais = [];
+      const rows = document.querySelectorAll('#materias-produto-container .linha-materia-produto');
+      rows.forEach(row => {
+        const selectMat = row.querySelector('.select-materia-id');
+        const qtdInput = row.querySelector('.input-qtd-materia');
+        if (selectMat && selectMat.value && qtdInput) {
+          const matObj = materias.find(m => String(m.id) === String(selectMat.value));
+          if (matObj) {
+            listaMateriais.push({
+              materia: matObj.nome,
+              quantidade: parseFloat(qtdInput.value) || 1,
+              unidade: matObj.unidade
+            });
+          }
+        }
+      });
+
+      const btn = document.getElementById('btn-gerar-ia-prod');
+      const btnText = document.getElementById('btn-gerar-ia-prod-text');
+      if (btn && btnText) {
+        btn.disabled = true;
+        btnText.textContent = 'Criando Legenda com IA...';
+      }
+
+      try {
+        const response = await fetch('/api/gemini/generate-product-info', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nomeProduto: nomeProduto || 'Produto Personalizado',
+            materiais: listaMateriais,
+            custoMaterial: custoMaterial,
+            precoSugerido: precoSugerido
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Falha ao comunicar com a IA');
+        }
+
+        const data = await response.json();
+
+        // Exibir resultados
+        const container = document.getElementById('container-ia-produto');
+        const descEl = document.getElementById('ia-prod-descricao');
+        const dicasEl = document.getElementById('ia-prod-dicas');
+        const tempoEl = document.getElementById('ia-prod-tempo');
+        const tagsEl = document.getElementById('ia-prod-tags');
+
+        if (descEl) descEl.textContent = data.descricao || '';
+        if (dicasEl) dicasEl.textContent = data.dicasPrecificacao || '';
+        if (tempoEl) tempoEl.textContent = data.tempoProducaoEstimado || 'Não estimado';
+
+        if (tagsEl) {
+          tagsEl.innerHTML = '';
+          if (data.tags && Array.isArray(data.tags)) {
+            data.tags.forEach(tag => {
+              const badge = document.createElement('span');
+              badge.className = 'px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 text-[10px] font-semibold';
+              badge.textContent = tag.startsWith('#') ? tag : `#${tag}`;
+              tagsEl.appendChild(badge);
+            });
+          }
+        }
+
+        if (container) container.classList.remove('hidden');
+        showToast('Legenda e dicas geradas com sucesso pela IA!');
+      } catch (err) {
+        console.error('Erro ao gerar com IA:', err);
+        showToast('Não foi possível gerar com IA no momento. Tente novamente.', 'error');
+      } finally {
+        if (btn && btnText) {
+          btn.disabled = false;
+          btnText.textContent = 'Gerar Legenda & Dicas com IA';
+        }
+      }
+    }
+
+    function copiarDescricaoIAProduto() {
+      const descEl = document.getElementById('ia-prod-descricao');
+      if (!descEl || !descEl.textContent) return;
+
+      navigator.clipboard.writeText(descEl.textContent).then(() => {
+        showToast('Legenda copiada para a área de transferência!');
+      }).catch(() => {
+        showToast('Erro ao copiar legenda.', 'error');
+      });
+    }
+
+    // 2. Gerar Mensagem de WhatsApp com IA para Pedido
+    let msgWaGeradaAtual = '';
+
+    async function gerarMensagemWhatsAppIAParaPedidoAtual() {
+      if (!idPedidoModalAtivo) return;
+      const ped = pedidos.find(p => String(p.id) === String(idPedidoModalAtivo));
+      if (ped) {
+        await processarMensagemWhatsAppIA(ped);
+      }
+    }
+
+    async function processarMensagemWhatsAppIA(ped) {
+      try {
+        showToast('Gerando mensagem personalizada com IA...', 'info');
+
+        const response = await fetch('/api/gemini/generate-whatsapp-msg', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cliente: ped.cliente,
+            numero: ped.numero,
+            dataEntrega: ped.dataEntrega ? formatarDataBR(ped.dataEntrega) : '',
+            status: ped.status,
+            valorTotal: ped.valorTotal,
+            itens: ped.itens
+          })
+        });
+
+        if (!response.ok) throw new Error('Erro ao gerar mensagem');
+
+        const data = await response.json();
+        msgWaGeradaAtual = data.mensagem || '';
+
+        const textarea = document.getElementById('textarea-msg-wa-ia');
+        if (textarea) textarea.value = msgWaGeradaAtual;
+
+        const modalWa = document.getElementById('modal-whatsapp-ia');
+        if (modalWa) modalWa.classList.remove('hidden');
+      } catch (err) {
+        console.error('Erro na mensagem IA WhatsApp:', err);
+        showToast('Erro ao gerar mensagem com IA.', 'error');
+      }
+    }
+
+    function fecharModalWhatsAppIA() {
+      const modalWa = document.getElementById('modal-whatsapp-ia');
+      if (modalWa) modalWa.classList.add('hidden');
+    }
+
+    function copiarMensagemWhatsAppIA() {
+      const textarea = document.getElementById('textarea-msg-wa-ia');
+      if (!textarea || !textarea.value) return;
+
+      navigator.clipboard.writeText(textarea.value).then(() => {
+        showToast('Mensagem copiada!');
+      }).catch(() => {
+        showToast('Erro ao copiar.', 'error');
+      });
+    }
+
+    function abrirWhatsAppWebComMensagem() {
+      const textarea = document.getElementById('textarea-msg-wa-ia');
+      const texto = textarea ? textarea.value : msgWaGeradaAtual;
+      if (!texto) return;
+
+      const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`;
+      window.open(url, '_blank');
+    }
+
+    // 3. Assistente IA Flutuante Chat
+    function abrirModalAssistenteIA() {
+      const modal = document.getElementById('modal-assistente-ia');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function fecharModalAssistenteIA() {
+      const modal = document.getElementById('modal-assistente-ia');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function usarPerguntaSugeridaIA(texto) {
+      const input = document.getElementById('input-chat-assistente-ia');
+      if (input) {
+        input.value = texto;
+        enviarMensagemAssistenteIA();
+      }
+    }
+
+    async function enviarMensagemAssistenteIA(e) {
+      if (e) e.preventDefault();
+
+      const input = document.getElementById('input-chat-assistente-ia');
+      if (!input || !input.value.trim()) return;
+
+      const msgUser = input.value.trim();
+      input.value = '';
+
+      const historico = document.getElementById('chat-historico-ia');
+      if (!historico) return;
+
+      // Adicionar bolha do Usuário
+      const userBubble = document.createElement('div');
+      userBubble.className = 'bg-purple-600 text-white p-3 rounded-xl ml-8 shadow-xs leading-relaxed font-medium';
+      userBubble.textContent = msgUser;
+      historico.appendChild(userBubble);
+
+      // Adicionar bolha temporária de Carregamento da IA
+      const loadingBubble = document.createElement('div');
+      loadingBubble.className = 'bg-white p-3 rounded-xl mr-8 border border-purple-100 shadow-xs text-slate-500 italic flex items-center gap-2';
+      loadingBubble.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-purple-600"></i> Pensando...`;
+      historico.appendChild(loadingBubble);
+
+      historico.scrollTop = historico.scrollHeight;
+
+      try {
+        const response = await fetch('/api/gemini/assistant', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mensagem: msgUser })
+        });
+
+        if (!response.ok) throw new Error('Erro na requisição');
+
+        const data = await response.json();
+        const respostaTexto = data.resposta || 'Desculpe, não consegui processar no momento.';
+
+        // Substituir bolha de carregamento pela resposta formatada
+        loadingBubble.className = 'bg-white p-3 rounded-xl mr-8 border border-purple-100 shadow-xs space-y-1 text-slate-800 leading-relaxed';
+        loadingBubble.innerHTML = `
+          <p class="font-bold text-purple-900 flex items-center gap-1.5 text-xs mb-1">
+            <i class="fa-solid fa-sparkles text-amber-500"></i> Assistente MM:
+          </p>
+          <div class="whitespace-pre-wrap">${escapeHtml(respostaTexto)}</div>
+        `;
+      } catch (err) {
+        console.error('Erro chat IA:', err);
+        loadingBubble.className = 'bg-rose-50 text-rose-700 p-3 rounded-xl mr-8 border border-rose-200 text-xs';
+        loadingBubble.textContent = 'Não foi possível se conectar com a IA. Tente novamente em instantes.';
+      } finally {
+        historico.scrollTop = historico.scrollHeight;
+      }
+    }
+  </script>
+
+</body>
+</html>
