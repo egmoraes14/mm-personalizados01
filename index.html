@@ -1337,7 +1337,8 @@
       doc, 
       setDoc, 
       deleteDoc, 
-      onSnapshot 
+      onSnapshot,
+      getDocFromServer
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -1351,6 +1352,18 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app, "ai-studio-mmpersonalizados-e99992c9-c926-4a31-a5ab-5e62eb2a7016");
+
+    // Teste de conexão Firestore
+    async function testConnection() {
+      try {
+        await getDocFromServer(doc(db, 'config', 'test_connection'));
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('the client is offline')) {
+          console.error("Firestore offline. Verifique a configuração e a conexão de rede.");
+        }
+      }
+    }
+    testConnection();
 
     // Torna funções utilitárias globais
     window.salvarMateriaFirestore = async (mat) => {
@@ -1458,12 +1471,8 @@
       }
 
       window.materias = docs;
-      if (typeof window.salvarMateriasStorageLocally === 'function') {
-        window.salvarMateriasStorageLocally();
-      }
-      if (typeof window.renderTabelaMaterias === 'function') {
-        window.renderTabelaMaterias();
-        window.atualizarSelectsMateriasProduto();
+      if (typeof window.syncMateriasFromFirestore === 'function') {
+        window.syncMateriasFromFirestore(docs);
       }
     }, (err) => {
       console.error("Erro snapshot matérias:", err);
@@ -1475,17 +1484,13 @@
       snapshot.forEach(d => docs.push(d.data()));
 
       prodLoaded = true;
-      if (matLoaded && prodLoaded && docs.length === 0 && window.materias.length === 0) {
+      if (matLoaded && prodLoaded && docs.length === 0 && (window.materias || []).length === 0) {
         semearBancoSeVazio(window.materias || [], docs);
       }
 
       window.produtos = docs;
-      if (typeof window.salvarProdutosStorageLocally === 'function') {
-        window.salvarProdutosStorageLocally();
-      }
-      if (typeof window.renderTabelaProdutos === 'function') {
-        window.renderTabelaProdutos();
-        window.atualizarSelectsItensPedido();
+      if (typeof window.syncProdutosFromFirestore === 'function') {
+        window.syncProdutosFromFirestore(docs);
       }
     }, (err) => {
       console.error("Erro snapshot produtos:", err);
@@ -1500,15 +1505,8 @@
       docs.sort((a, b) => (b.id || '').localeCompare(a.id || ''));
 
       window.pedidos = docs;
-      if (typeof window.salvarPedidosStorageLocally === 'function') {
-        window.salvarPedidosStorageLocally();
-      }
-      if (typeof window.renderTabelaPedidosAtivos === 'function') {
-        window.renderTabelaPedidosAtivos();
-        window.renderHistoricoPedidos();
-      }
-      if (typeof window.renderKanbanProducao === 'function') {
-        window.renderKanbanProducao();
+      if (typeof window.syncPedidosFromFirestore === 'function') {
+        window.syncPedidosFromFirestore(docs);
       }
     }, (err) => {
       console.error("Erro snapshot pedidos:", err);
@@ -1518,15 +1516,17 @@
     onSnapshot(doc(db, "config", "geral"), (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data();
-        if (data && data.seqPedido) {
+        if (data && typeof data.seqPedido === 'number') {
           window.seqPedido = data.seqPedido;
-          if (typeof window.atualizarNumeroPedidoDisplay === 'function') {
-            window.atualizarNumeroPedidoDisplay();
+          if (typeof window.syncSeqFromFirestore === 'function') {
+            window.syncSeqFromFirestore(data.seqPedido);
           }
         }
       } else {
         setDoc(doc(db, "config", "geral"), { seqPedido: window.seqPedido || 1 });
       }
+    }, (err) => {
+      console.error("Erro snapshot config:", err);
     });
 
     // Atualizar texto do indicador para Firestore Ativo
@@ -1694,32 +1694,59 @@
       seqPedido = storedSeq ? parseInt(storedSeq, 10) : 1;
     }
 
-    window.salvarMateriasStorageLocally = function() {
+    window.syncMateriasFromFirestore = function(docs) {
+      if (!Array.isArray(docs)) return;
+      materias = docs;
       localStorage.setItem(KEY_MATERIAS, JSON.stringify(materias));
       atualizarEstatisticas();
+      renderTabelaMaterias();
+      atualizarSelectsMateriasProduto();
     };
 
-    window.salvarProdutosStorageLocally = function() {
+    window.syncProdutosFromFirestore = function(docs) {
+      if (!Array.isArray(docs)) return;
+      produtos = docs;
       localStorage.setItem(KEY_PRODUTOS, JSON.stringify(produtos));
       atualizarEstatisticas();
+      renderTabelaProdutos();
+      atualizarSelectsItensPedido();
     };
 
-    window.salvarPedidosStorageLocally = function() {
+    window.syncPedidosFromFirestore = function(docs) {
+      if (!Array.isArray(docs)) return;
+      pedidos = docs;
       localStorage.setItem(KEY_PEDIDOS, JSON.stringify(pedidos));
-      localStorage.setItem(KEY_SEQ, seqPedido.toString());
       atualizarEstatisticas();
+      renderTabelaPedidosAtivos();
+      renderHistoricoPedidos();
+      if (typeof renderKanbanProducao === 'function') {
+        renderKanbanProducao();
+      }
+    };
+
+    window.syncSeqFromFirestore = function(seq) {
+      if (typeof seq !== 'number') return;
+      seqPedido = seq;
+      localStorage.setItem(KEY_SEQ, seqPedido.toString());
+      if (typeof atualizarNumeroPedidoDisplay === 'function') {
+        atualizarNumeroPedidoDisplay();
+      }
     };
 
     function salvarMateriasStorage() {
-      window.salvarMateriasStorageLocally();
+      localStorage.setItem(KEY_MATERIAS, JSON.stringify(materias));
+      atualizarEstatisticas();
     }
 
     function salvarProdutosStorage() {
-      window.salvarProdutosStorageLocally();
+      localStorage.setItem(KEY_PRODUTOS, JSON.stringify(produtos));
+      atualizarEstatisticas();
     }
 
     function salvarPedidosStorage() {
-      window.salvarPedidosStorageLocally();
+      localStorage.setItem(KEY_PEDIDOS, JSON.stringify(pedidos));
+      localStorage.setItem(KEY_SEQ, seqPedido.toString());
+      atualizarEstatisticas();
     }
 
     function atualizarEstatisticas() {
@@ -3445,6 +3472,9 @@
       solicitarConfirmacao(`Deseja realmente excluir o pedido ${ped.numero} do histórico?`, () => {
         console.log('[Excluir Pedido] Confirmado. Removendo ID:', id);
         pedidos = pedidos.filter(p => String(p.id) !== String(id));
+        if (typeof window.excluirPedidoFirestore === 'function') {
+          window.excluirPedidoFirestore(id);
+        }
         salvarPedidosStorage();
         renderHistoricoPedidos();
         showToast('Pedido removido do histórico!');
