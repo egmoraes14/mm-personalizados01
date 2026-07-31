@@ -67,6 +67,24 @@
     h1, h2, h3, .font-display {
       font-family: 'Outfit', sans-serif;
     }
+    /* Transições Suaves para Abas */
+    .tab-content {
+      will-change: opacity, transform;
+    }
+    .tab-animate-enter {
+      animation: tabFadeSlideIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes tabFadeSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
     /* Printable Area Styling */
     @media print {
       body {
@@ -117,7 +135,17 @@
             <h1 class="text-xl sm:text-2xl font-extrabold text-[#5B3219] font-display tracking-tight flex items-center gap-2">
               MM Personalizados
             </h1>
-            <p class="text-xs text-[#8C522B] font-semibold hidden sm:block">Gestão de Ateliê • Materiais, Produtos e Pedidos</p>
+            <div class="flex items-center gap-2">
+              <p class="text-xs text-[#8C522B] font-semibold hidden sm:block">Gestão de Ateliê • Materiais, Produtos e Pedidos</p>
+              <div id="firestore-status-badge" class="flex items-center gap-1.5 bg-amber-50 text-amber-900 text-[11px] px-2 py-0.5 rounded-lg border border-amber-200 font-semibold shadow-2xs">
+                <span class="relative flex h-2 w-2">
+                  <span id="firestore-dot-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span id="firestore-dot" class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <i class="fa-solid fa-cloud-arrow-up text-amber-600"></i>
+                <span id="firestore-status-text">Firestore Conectado</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -156,9 +184,15 @@
           <span>3. Novo Pedido</span>
         </button>
 
+        <button onclick="switchTab('tab-producao')" id="nav-tab-producao" class="tab-btn px-4 py-2.5 rounded-xl font-bold text-sm sm:text-base flex items-center gap-2 transition-all whitespace-nowrap text-[#6E3B1E] hover:bg-[#F4ECE1]">
+          <i class="fa-solid fa-bars-staggered"></i>
+          <span>4. Organização da Produção</span>
+          <span id="badge-producao-count" class="hidden px-2 py-0.5 rounded-full text-xs font-extrabold bg-amber-600 text-white shadow-xs">0</span>
+        </button>
+
         <button onclick="switchTab('tab-pedidos')" id="nav-tab-pedidos" class="tab-btn px-4 py-2.5 rounded-xl font-bold text-sm sm:text-base flex items-center gap-2 transition-all whitespace-nowrap text-[#6E3B1E] hover:bg-[#F4ECE1]">
           <i class="fa-solid fa-clipboard-list"></i>
-          <span>4. Pedidos</span>
+          <span>5. Pedidos</span>
           <span id="badge-pedidos-ativos-count" class="hidden px-2 py-0.5 rounded-full text-xs font-extrabold bg-[#DB2777] text-white shadow-sm">0</span>
         </button>
 
@@ -177,7 +211,7 @@
     <!-- ========================================== -->
     <!-- ABA 1: MATÉRIA-PRIMA                       -->
     <!-- ========================================== -->
-    <section id="tab-materia-prima" class="tab-content space-y-6">
+    <section id="tab-materia-prima" class="tab-content tab-animate-enter space-y-6">
       
       <!-- Section Header -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
@@ -746,7 +780,240 @@
     </section>
 
     <!-- ========================================== -->
-    <!-- ABA 4: PEDIDOS EM ABERTO                   -->
+    <!-- ABA 4: ORGANIZAÇÃO DA PRODUÇÃO (KANBAN)    -->
+    <!-- ========================================== -->
+    <section id="tab-producao" class="tab-content hidden space-y-6">
+      
+      <!-- Section Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center text-sm shadow-2xs">
+              <i class="fa-solid fa-bars-staggered"></i>
+            </span>
+            Organização da Produção (Kanban de Ateliê)
+          </h2>
+          <p class="text-sm text-slate-500 mt-1">Gerencie a fabricação dos personalizados etapa por etapa. Arraste ou clique para avançar os pedidos!</p>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <button 
+            onclick="switchTab('tab-pedidos')" 
+            class="px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold transition-all flex items-center gap-1.5"
+          >
+            <i class="fa-solid fa-table-list"></i>
+            Ver em Tabela
+          </button>
+          <button 
+            onclick="novaOrdemEIrParaForm()" 
+            class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs sm:text-sm transition-all flex items-center gap-2 shadow-sm shadow-emerald-200"
+          >
+            <i class="fa-solid fa-plus"></i>
+            Novo Pedido
+          </button>
+        </div>
+      </div>
+
+      <!-- Resumo da Produção (Métricas Rápidas) -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        
+        <div class="bg-gradient-to-br from-indigo-50/90 to-blue-50/50 p-4 rounded-2xl border border-indigo-100 shadow-2xs">
+          <div class="flex items-center justify-between text-indigo-900">
+            <span class="text-xs font-bold uppercase tracking-wider">Arte & Aprovação</span>
+            <span class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-palette"></i>
+            </span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="stat-producao-arte-pedidos" class="text-2xl font-extrabold text-indigo-950">0</span>
+            <span id="stat-producao-arte-pecas" class="text-xs font-semibold text-indigo-700">pedidos</span>
+          </div>
+          <p class="text-[11px] text-indigo-600 mt-1">Aguardando mockup/ok do cliente</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-amber-50/90 to-orange-50/50 p-4 rounded-2xl border border-amber-100 shadow-2xs">
+          <div class="flex items-center justify-between text-amber-900">
+            <span class="text-xs font-bold uppercase tracking-wider">Impressão & Corte</span>
+            <span class="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-[#fa-scissors] fa-scissors"></i>
+            </span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="stat-producao-corte-pedidos" class="text-2xl font-extrabold text-amber-950">0</span>
+            <span id="stat-producao-corte-pecas" class="text-xs font-semibold text-amber-800">pedidos</span>
+          </div>
+          <p class="text-[11px] text-amber-700 mt-1">Silhouette, Plotter & Impressão</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-pink-50/90 to-rose-50/50 p-4 rounded-2xl border border-pink-100 shadow-2xs">
+          <div class="flex items-center justify-between text-pink-900">
+            <span class="text-xs font-bold uppercase tracking-wider">Montagem & Laços</span>
+            <span class="w-7 h-7 rounded-lg bg-pink-100 text-pink-700 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-puzzle-piece"></i>
+            </span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="stat-producao-montagem-pedidos" class="text-2xl font-extrabold text-pink-950">0</span>
+            <span id="stat-producao-montagem-pecas" class="text-xs font-semibold text-pink-800">pedidos</span>
+          </div>
+          <p class="text-[11px] text-pink-700 mt-1">Dobras, cola quente & apliques 3D</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-emerald-50/90 to-teal-50/50 p-4 rounded-2xl border border-emerald-100 shadow-2xs">
+          <div class="flex items-center justify-between text-emerald-900">
+            <span class="text-xs font-bold uppercase tracking-wider">Pronto p/ Retirada</span>
+            <span class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs">
+              <i class="fa-solid fa-box-open"></i>
+            </span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="stat-producao-pronto-pedidos" class="text-2xl font-extrabold text-emerald-950">0</span>
+            <span id="stat-producao-pronto-pecas" class="text-xs font-semibold text-emerald-800">pedidos</span>
+          </div>
+          <p class="text-[11px] text-emerald-700 mt-1">Embalado & aguardando entrega</p>
+        </div>
+
+      </div>
+
+      <!-- Filtros da Produção -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div class="relative w-full sm:w-96">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+          <input 
+            type="text" 
+            id="filtro-producao-busca" 
+            oninput="renderKanbanProducao()" 
+            placeholder="Filtrar produção por cliente, nº ou produto..." 
+            class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-600 transition-all text-slate-800"
+          />
+        </div>
+
+        <div class="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+          <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-50 p-1 rounded-xl border border-slate-200">
+            <i class="fa-regular fa-clock text-amber-700 ml-2"></i>
+            <select 
+              id="filtro-producao-entrega" 
+              onchange="renderKanbanProducao()" 
+              class="bg-transparent text-slate-700 py-1.5 pr-2 pl-1 rounded-lg text-xs font-semibold focus:outline-none cursor-pointer"
+            >
+              <option value="todas">Todos os Prazos</option>
+              <option value="urgentes">Urgentes / Atrasados</option>
+              <option value="hoje">Entrega Hoje</option>
+              <option value="proximos_7">Próximos 7 Dias</option>
+            </select>
+          </div>
+
+          <button 
+            onclick="limparFiltrosProducao()" 
+            class="px-3 py-2 rounded-xl text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 transition-all flex items-center gap-1"
+            title="Limpar Filtros"
+          >
+            <i class="fa-solid fa-filter-circle-xmark"></i>
+            Limpar
+          </button>
+        </div>
+      </div>
+
+      <!-- QUADRO KANBAN DE PRODUÇÃO -->
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
+        
+        <!-- Coluna 1: Arte & Aprovação -->
+        <div class="bg-slate-100/70 rounded-2xl border border-slate-200/80 p-3.5 space-y-3 min-h-[500px]">
+          <div class="flex items-center justify-between bg-indigo-600 text-white p-3 rounded-xl shadow-xs">
+            <div class="flex items-center gap-2 font-bold text-sm">
+              <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i>
+              <span>1. Arte & Aprovação</span>
+            </div>
+            <span id="cnt-col-arte" class="px-2 py-0.5 rounded-full bg-white/20 text-white text-xs font-extrabold">0</span>
+          </div>
+          <p class="text-[11px] text-slate-500 font-medium px-1">Designers, artes e mockup para enviar ao cliente</p>
+          
+          <div 
+            id="kanban-col-arte" 
+            class="space-y-3 min-h-[400px] rounded-xl transition-colors p-1"
+            ondragover="event.preventDefault()"
+            ondragenter="this.classList.add('bg-indigo-50/60','border-2','border-dashed','border-indigo-300')"
+            ondragleave="this.classList.remove('bg-indigo-50/60','border-2','border-dashed','border-indigo-300')"
+            ondrop="handleDropEtapa(event, 'arte')"
+          >
+            <!-- Cards de Pedidos na etapa de Arte -->
+          </div>
+        </div>
+
+        <!-- Coluna 2: Impressão & Corte -->
+        <div class="bg-slate-100/70 rounded-2xl border border-slate-200/80 p-3.5 space-y-3 min-h-[500px]">
+          <div class="flex items-center justify-between bg-amber-600 text-white p-3 rounded-xl shadow-xs">
+            <div class="flex items-center gap-2 font-bold text-sm">
+              <i class="fa-solid fa-scissors text-amber-200"></i>
+              <span>2. Impressão & Corte</span>
+            </div>
+            <span id="cnt-col-corte" class="px-2 py-0.5 rounded-full bg-white/20 text-white text-xs font-extrabold">0</span>
+          </div>
+          <p class="text-[11px] text-slate-500 font-medium px-1">Impressoras Glossy, vinco e corte na Plotter/Silhouette</p>
+          
+          <div 
+            id="kanban-col-corte" 
+            class="space-y-3 min-h-[400px] rounded-xl transition-colors p-1"
+            ondragover="event.preventDefault()"
+            ondragenter="this.classList.add('bg-amber-50/60','border-2','border-dashed','border-amber-300')"
+            ondragleave="this.classList.remove('bg-amber-50/60','border-2','border-dashed','border-amber-300')"
+            ondrop="handleDropEtapa(event, 'corte')"
+          >
+            <!-- Cards de Pedidos na etapa de Corte -->
+          </div>
+        </div>
+
+        <!-- Coluna 3: Montagem & Acabamento -->
+        <div class="bg-slate-100/70 rounded-2xl border border-slate-200/80 p-3.5 space-y-3 min-h-[500px]">
+          <div class="flex items-center justify-between bg-pink-600 text-white p-3 rounded-xl shadow-xs">
+            <div class="flex items-center gap-2 font-bold text-sm">
+              <i class="fa-solid fa-puzzle-piece text-pink-200"></i>
+              <span>3. Montagem & Colagem</span>
+            </div>
+            <span id="cnt-col-montagem" class="px-2 py-0.5 rounded-full bg-white/20 text-white text-xs font-extrabold">0</span>
+          </div>
+          <p class="text-[11px] text-slate-500 font-medium px-1">Dobras, cola quente, fita banana, laços e pedrarias</p>
+          
+          <div 
+            id="kanban-col-montagem" 
+            class="space-y-3 min-h-[400px] rounded-xl transition-colors p-1"
+            ondragover="event.preventDefault()"
+            ondragenter="this.classList.add('bg-pink-50/60','border-2','border-dashed','border-pink-300')"
+            ondragleave="this.classList.remove('bg-pink-50/60','border-2','border-dashed','border-pink-300')"
+            ondrop="handleDropEtapa(event, 'montagem')"
+          >
+            <!-- Cards de Pedidos na etapa de Montagem -->
+          </div>
+        </div>
+
+        <!-- Coluna 4: Pronto para Retirada -->
+        <div class="bg-slate-100/70 rounded-2xl border border-slate-200/80 p-3.5 space-y-3 min-h-[500px]">
+          <div class="flex items-center justify-between bg-emerald-600 text-white p-3 rounded-xl shadow-xs">
+            <div class="flex items-center gap-2 font-bold text-sm">
+              <i class="fa-solid fa-box-open text-emerald-200"></i>
+              <span>4. Pronto p/ Retirada</span>
+            </div>
+            <span id="cnt-col-pronto" class="px-2 py-0.5 rounded-full bg-white/20 text-white text-xs font-extrabold">0</span>
+          </div>
+          <p class="text-[11px] text-slate-500 font-medium px-1">Embalado com cheirinho, pronto para a festa do cliente!</p>
+          
+          <div 
+            id="kanban-col-pronto" 
+            class="space-y-3 min-h-[400px] rounded-xl transition-colors p-1"
+            ondragover="event.preventDefault()"
+            ondragenter="this.classList.add('bg-emerald-50/60','border-2','border-dashed','border-emerald-300')"
+            ondragleave="this.classList.remove('bg-emerald-50/60','border-2','border-dashed','border-emerald-300')"
+            ondrop="handleDropEtapa(event, 'pronto')"
+          >
+            <!-- Cards de Pedidos na etapa de Pronto -->
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- ABA 5: PEDIDOS EM ABERTO                   -->
     <!-- ========================================== -->
     <section id="tab-pedidos" class="tab-content hidden space-y-6">
       
@@ -863,6 +1130,7 @@
                 <th class="px-4 py-3">Cliente</th>
                 <th class="px-4 py-3">Data Criação</th>
                 <th class="px-4 py-3">Data Entrega</th>
+                <th class="px-4 py-3">Etapa Produção</th>
                 <th class="px-4 py-3">Itens</th>
                 <th class="px-4 py-3">Pagamento</th>
                 <th class="px-4 py-3 text-right">Total</th>
@@ -1014,85 +1282,7 @@
     </div>
   </div>
 
-  <!-- Modal Assistente IA MM Personalizados -->
-  <div id="modal-assistente-ia" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] flex flex-col">
-      <div class="flex items-center justify-between border-b border-purple-100 pb-3">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 via-pink-600 to-amber-500 text-white flex items-center justify-center text-lg shadow-md shadow-purple-200">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-          </div>
-          <div>
-            <h3 class="font-bold text-base text-purple-950">Assistente IA MM Personalizados</h3>
-            <p class="text-xs text-purple-600">Consultoria para ateliê, festas e precificação</p>
-          </div>
-        </div>
-        <button onclick="fecharModalAssistenteIA()" class="text-slate-400 hover:text-slate-600">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
 
-      <!-- Histórico de Chat -->
-      <div id="chat-historico-ia" class="flex-1 overflow-y-auto min-h-[220px] max-h-[350px] p-3 bg-purple-50/40 rounded-xl space-y-3 border border-purple-100/60 text-xs">
-        <div class="bg-white p-3 rounded-xl border border-purple-100 shadow-2xs space-y-1">
-          <p class="font-bold text-purple-900 flex items-center gap-1.5">
-            <i class="fa-solid fa-sparkles text-amber-500"></i> Olá! Como posso te ajudar hoje?
-          </p>
-          <p class="text-slate-600 leading-relaxed">
-            Sou sua assistente especialista do ateliê. Posso sugerir temas de festas, ideias de lembrancinhas, cálculo de hora trabalhada, dicas de fotos para o Instagram e muito mais!
-          </p>
-        </div>
-      </div>
-
-      <!-- Perguntas Rápidas Sugeridas -->
-      <div class="space-y-1.5">
-        <p class="text-[11px] font-semibold text-slate-500">Perguntas Rápidas Sugeridas:</p>
-        <div class="flex flex-wrap gap-1.5">
-          <button type="button" onclick="usarPerguntaSugeridaIA('Ideias criativas de lembrancinhas para Festa Safari')" class="px-2.5 py-1 bg-purple-100/80 hover:bg-purple-200 text-purple-900 rounded-lg text-[11px] font-medium transition-all">
-            🎈 Ideias Safari
-          </button>
-          <button type="button" onclick="usarPerguntaSugeridaIA('Como calcular meu valor de hora trabalhada no ateliê?')" class="px-2.5 py-1 bg-purple-100/80 hover:bg-purple-200 text-purple-900 rounded-lg text-[11px] font-medium transition-all">
-            ⏱️ Calcular Hora Trabalhada
-          </button>
-          <button type="button" onclick="usarPerguntaSugeridaIA('Dicas para não desperdiçar papel fotográfico e vinil')" class="px-2.5 py-1 bg-purple-100/80 hover:bg-purple-200 text-purple-900 rounded-lg text-[11px] font-medium transition-all">
-            ✂️ Reduzir Desperdício
-          </button>
-        </div>
-      </div>
-
-      <!-- Input Chat -->
-      <form onsubmit="enviarMensagemAssistenteIA(event)" class="flex items-center gap-2 pt-1">
-        <input 
-          type="text" 
-          id="input-chat-assistente-ia" 
-          placeholder="Digite sua dúvida ou pedido de ideias..." 
-          class="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
-        />
-        <button 
-          type="submit" 
-          id="btn-enviar-chat-ia" 
-          class="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 shadow-sm shadow-purple-200"
-        >
-          <i class="fa-solid fa-paper-plane"></i> Enviar
-        </button>
-      </form>
-
-    </div>
-  </div>
-
-  <!-- Botão Flutuante da IA Assistente -->
-  <button 
-    onclick="abrirModalAssistenteIA()" 
-    class="fixed bottom-5 right-5 z-40 bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 hover:from-purple-700 hover:to-amber-600 text-white shadow-xl shadow-purple-500/30 px-4 py-3 rounded-full font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all hover:scale-105 active:scale-95 group"
-    title="Abrir Assistente Inteligente IA"
-  >
-    <span class="relative flex h-2.5 w-2.5">
-      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-200 opacity-75"></span>
-      <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-300"></span>
-    </span>
-    <i class="fa-solid fa-wand-magic-sparkles text-amber-200 text-sm"></i>
-    <span>Assistente IA</span>
-  </button>
 
     </div>
   </div>
@@ -1129,12 +1319,225 @@
   </div>
 
   <!-- Footer -->
-  <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400 mt-auto">
-    <p>MM Personalizados - Gestão Integrada &bull; Todos os dados mantidos com segurança no seu navegador.</p>
+  <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 mt-auto">
+    <p class="flex items-center justify-center gap-2">
+      <i class="fa-solid fa-cloud text-amber-500"></i>
+      <span>MM Personalizados &bull; Matérias-Primas, Produtos e Pedidos sincronizados no <strong>Banco de Dados Firestore</strong></span>
+    </p>
   </footer>
 
   <!-- ========================================== -->
-  <!-- LOGICA JAVASCRIPT                          -->
+  <!-- FIREBASE FIRESTORE MODULE                  -->
+  <!-- ========================================== -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { 
+      getFirestore, 
+      collection, 
+      doc, 
+      setDoc, 
+      deleteDoc, 
+      onSnapshot 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCLZ91GaMcGbJMl9heh5KRnjWuqZbjOHfk",
+      authDomain: "gen-lang-client-0092365066.firebaseapp.com",
+      projectId: "gen-lang-client-0092365066",
+      storageBucket: "gen-lang-client-0092365066.firebasestorage.app",
+      messagingSenderId: "290034226131",
+      appId: "1:290034226131:web:5d014eec7f9d4510d91526"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app, "ai-studio-mmpersonalizados-e99992c9-c926-4a31-a5ab-5e62eb2a7016");
+
+    // Torna funções utilitárias globais
+    window.salvarMateriaFirestore = async (mat) => {
+      try {
+        await setDoc(doc(db, "materias", String(mat.id)), mat);
+      } catch (err) {
+        console.error("Erro ao salvar matéria-prima no Firestore:", err);
+      }
+    };
+
+    window.excluirMateriaFirestore = async (id) => {
+      try {
+        await deleteDoc(doc(db, "materias", String(id)));
+      } catch (err) {
+        console.error("Erro ao excluir matéria-prima no Firestore:", err);
+      }
+    };
+
+    window.salvarProdutoFirestore = async (prod) => {
+      try {
+        await setDoc(doc(db, "produtos", String(prod.id)), prod);
+      } catch (err) {
+        console.error("Erro ao salvar produto no Firestore:", err);
+      }
+    };
+
+    window.excluirProdutoFirestore = async (id) => {
+      try {
+        await deleteDoc(doc(db, "produtos", String(id)));
+      } catch (err) {
+        console.error("Erro ao excluir produto no Firestore:", err);
+      }
+    };
+
+    window.salvarPedidoFirestore = async (ped, novoSeq = null) => {
+      try {
+        await setDoc(doc(db, "pedidos", String(ped.id)), ped);
+        if (novoSeq) {
+          await setDoc(doc(db, "config", "geral"), { seqPedido: novoSeq }, { merge: true });
+        }
+      } catch (err) {
+        console.error("Erro ao salvar pedido no Firestore:", err);
+      }
+    };
+
+    window.excluirPedidoFirestore = async (id) => {
+      try {
+        await deleteDoc(doc(db, "pedidos", String(id)));
+      } catch (err) {
+        console.error("Erro ao excluir pedido no Firestore:", err);
+      }
+    };
+
+    let seededInitial = false;
+
+    // Função para semear dados iniciais no banco caso o Firestore esteja vazio
+    async function semearBancoSeVazio(materiasDocs, produtosDocs) {
+      if (seededInitial) return;
+      seededInitial = true;
+
+      if (materiasDocs.length === 0) {
+        console.log("Banco de matérias-primas vazio. Semeando itens padrão...");
+        const padraoMaterias = [
+          { id: 'm1', descricao: 'Papel Fotográfico 180g Glossy A4', valorUnitario: 0.80 },
+          { id: 'm2', descricao: 'Fita de Cetim 22mm (1 metro)', valorUnitario: 0.40 },
+          { id: 'm3', descricao: 'Cola Quente / Bastão', valorUnitario: 0.30 },
+          { id: 'm4', descricao: 'Aplique 3D em Papel Lamicote Dourado', valorUnitario: 1.20 }
+        ];
+        for (const m of padraoMaterias) {
+          await window.salvarMateriaFirestore(m);
+        }
+      }
+
+      if (produtosDocs.length === 0) {
+        console.log("Banco de produtos vazio. Semeando produtos padrão...");
+        const padraoProduto = {
+          id: 'p1',
+          nome: 'Caixa Milk Temática 3D',
+          materiaIds: ['m1', 'm2', 'm3', 'm4'],
+          materiasComposicao: [
+            { id: 'm1', qtd: 1 },
+            { id: 'm2', qtd: 1 },
+            { id: 'm3', qtd: 1 },
+            { id: 'm4', qtd: 1 }
+          ],
+          custoTotal: 2.70,
+          precoVenda: 6.75
+        };
+        await window.salvarProdutoFirestore(padraoProduto);
+      }
+    }
+
+    // Listeners Realtime (Snapshots)
+    let matLoaded = false;
+    let prodLoaded = false;
+
+    // 1. Escutar Matérias-Primas em Tempo Real
+    onSnapshot(collection(db, "materias"), (snapshot) => {
+      const docs = [];
+      snapshot.forEach(d => docs.push(d.data()));
+      
+      matLoaded = true;
+      if (matLoaded && prodLoaded && docs.length === 0) {
+        semearBancoSeVazio(docs, window.produtos || []);
+      }
+
+      window.materias = docs;
+      if (typeof window.salvarMateriasStorageLocally === 'function') {
+        window.salvarMateriasStorageLocally();
+      }
+      if (typeof window.renderTabelaMaterias === 'function') {
+        window.renderTabelaMaterias();
+        window.atualizarSelectsMateriasProduto();
+      }
+    }, (err) => {
+      console.error("Erro snapshot matérias:", err);
+    });
+
+    // 2. Escutar Produtos em Tempo Real
+    onSnapshot(collection(db, "produtos"), (snapshot) => {
+      const docs = [];
+      snapshot.forEach(d => docs.push(d.data()));
+
+      prodLoaded = true;
+      if (matLoaded && prodLoaded && docs.length === 0 && window.materias.length === 0) {
+        semearBancoSeVazio(window.materias || [], docs);
+      }
+
+      window.produtos = docs;
+      if (typeof window.salvarProdutosStorageLocally === 'function') {
+        window.salvarProdutosStorageLocally();
+      }
+      if (typeof window.renderTabelaProdutos === 'function') {
+        window.renderTabelaProdutos();
+        window.atualizarSelectsItensPedido();
+      }
+    }, (err) => {
+      console.error("Erro snapshot produtos:", err);
+    });
+
+    // 3. Escutar Pedidos em Tempo Real
+    onSnapshot(collection(db, "pedidos"), (snapshot) => {
+      const docs = [];
+      snapshot.forEach(d => docs.push(d.data()));
+
+      // Garantir ordenação mais recente no topo
+      docs.sort((a, b) => (b.id || '').localeCompare(a.id || ''));
+
+      window.pedidos = docs;
+      if (typeof window.salvarPedidosStorageLocally === 'function') {
+        window.salvarPedidosStorageLocally();
+      }
+      if (typeof window.renderTabelaPedidosAtivos === 'function') {
+        window.renderTabelaPedidosAtivos();
+        window.renderHistoricoPedidos();
+      }
+      if (typeof window.renderKanbanProducao === 'function') {
+        window.renderKanbanProducao();
+      }
+    }, (err) => {
+      console.error("Erro snapshot pedidos:", err);
+    });
+
+    // 4. Escutar Config de Sequência do Pedido
+    onSnapshot(doc(db, "config", "geral"), (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (data && data.seqPedido) {
+          window.seqPedido = data.seqPedido;
+          if (typeof window.atualizarNumeroPedidoDisplay === 'function') {
+            window.atualizarNumeroPedidoDisplay();
+          }
+        }
+      } else {
+        setDoc(doc(db, "config", "geral"), { seqPedido: window.seqPedido || 1 });
+      }
+    });
+
+    // Atualizar texto do indicador para Firestore Ativo
+    const statusText = document.getElementById('firestore-status-text');
+    if (statusText) {
+      statusText.textContent = 'Banco Firestore Ativo';
+    }
+  </script>
+
+  <!-- ========================================== -->
+  <!-- LOGICA JAVASCRIPT PRINCIPAL                -->
   <!-- ========================================== -->
   <script>
     // LocalStorage Keys
@@ -1235,6 +1638,7 @@
       
       // Adiciona uma linha inicial padrão no formulário de pedido
       adicionarLinhaItem();
+      renderKanbanProducao();
       renderTabelaPedidosAtivos();
       renderHistoricoPedidos();
     });
@@ -1290,20 +1694,32 @@
       seqPedido = storedSeq ? parseInt(storedSeq, 10) : 1;
     }
 
-    function salvarMateriasStorage() {
+    window.salvarMateriasStorageLocally = function() {
       localStorage.setItem(KEY_MATERIAS, JSON.stringify(materias));
       atualizarEstatisticas();
-    }
+    };
 
-    function salvarProdutosStorage() {
+    window.salvarProdutosStorageLocally = function() {
       localStorage.setItem(KEY_PRODUTOS, JSON.stringify(produtos));
       atualizarEstatisticas();
-    }
+    };
 
-    function salvarPedidosStorage() {
+    window.salvarPedidosStorageLocally = function() {
       localStorage.setItem(KEY_PEDIDOS, JSON.stringify(pedidos));
       localStorage.setItem(KEY_SEQ, seqPedido.toString());
       atualizarEstatisticas();
+    };
+
+    function salvarMateriasStorage() {
+      window.salvarMateriasStorageLocally();
+    }
+
+    function salvarProdutosStorage() {
+      window.salvarProdutosStorageLocally();
+    }
+
+    function salvarPedidosStorage() {
+      window.salvarPedidosStorageLocally();
     }
 
     function atualizarEstatisticas() {
@@ -1325,14 +1741,27 @@
           badgePedidosNav.classList.add('hidden');
         }
       }
+
+      const badgeProducaoNav = document.getElementById('badge-producao-count');
+      if (badgeProducaoNav) {
+        if (pedidosAtivos.length > 0) {
+          badgeProducaoNav.textContent = pedidosAtivos.length;
+          badgeProducaoNav.classList.remove('hidden');
+        } else {
+          badgeProducaoNav.classList.add('hidden');
+        }
+      }
     }
 
     // ----------------------------------------------------
     // CONTROLADOR DE ABAS DE NAVEGAÇÃO
     // ----------------------------------------------------
     function switchTab(tabId) {
-      // Ocultar todos os conteúdos
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      // Ocultar todos os conteúdos e remover animações anteriores
+      document.querySelectorAll('.tab-content').forEach(el => {
+        el.classList.add('hidden');
+        el.classList.remove('tab-animate-enter');
+      });
       
       // Tirar estilo ativo de todos os botões
       document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -1340,10 +1769,12 @@
         btn.classList.add('text-[#6E3B1E]', 'hover:bg-[#F4ECE1]');
       });
 
-      // Exibir a aba selecionada
+      // Exibir a aba selecionada com animação suave de opacidade e movimento
       const targetTab = document.getElementById(tabId);
       if (targetTab) {
         targetTab.classList.remove('hidden');
+        void targetTab.offsetWidth; // Força reflow para reiniciar a animação CSS
+        targetTab.classList.add('tab-animate-enter');
       }
 
       // Destacar o botão ativo
@@ -1460,6 +1891,15 @@
 
           recalcularCustosProdutos();
 
+          if (typeof window.salvarMateriaFirestore === 'function') {
+            window.salvarMateriaFirestore(mat);
+            produtos.forEach(p => {
+              if (typeof window.salvarProdutoFirestore === 'function') {
+                window.salvarProdutoFirestore(p);
+              }
+            });
+          }
+
           salvarMateriasStorage();
           salvarProdutosStorage();
 
@@ -1480,6 +1920,9 @@
       };
 
       materias.push(novaMateria);
+      if (typeof window.salvarMateriaFirestore === 'function') {
+        window.salvarMateriaFirestore(novaMateria);
+      }
       salvarMateriasStorage();
 
       cancelarEdicaoMateriaPrima();
@@ -1561,6 +2004,9 @@
       solicitarConfirmacao(mensagem, () => {
         console.log('[Excluir Matéria-Prima] Confirmado. Removendo ID:', id);
         materias = materias.filter(m => String(m.id) !== String(id));
+        if (typeof window.excluirMateriaFirestore === 'function') {
+          window.excluirMateriaFirestore(id);
+        }
         salvarMateriasStorage();
         
         const tbody = document.getElementById('tbody-materias');
@@ -1693,6 +2139,9 @@
       };
 
       produtos.push(novoProduto);
+      if (typeof window.salvarProdutoFirestore === 'function') {
+        window.salvarProdutoFirestore(novoProduto);
+      }
       salvarProdutosStorage();
 
       // Reset Form
@@ -1759,6 +2208,9 @@
       solicitarConfirmacao(`Deseja excluir o produto "${prod.nome}"?`, () => {
         console.log('[Excluir Produto] Confirmado. Removendo ID:', id);
         produtos = produtos.filter(p => String(p.id) !== String(id));
+        if (typeof window.excluirProdutoFirestore === 'function') {
+          window.excluirProdutoFirestore(id);
+        }
         salvarProdutosStorage();
 
         const tbody = document.getElementById('tbody-produtos');
@@ -1988,6 +2440,10 @@
           ped.valorTotal = totalCalculado;
           ped.dataAtualizacao = new Date().toLocaleString('pt-BR');
 
+          if (typeof window.salvarPedidoFirestore === 'function') {
+            window.salvarPedidoFirestore(ped);
+          }
+
           showToast(`Pedido ${ped.numero} alterado com sucesso!`);
         }
         cancelarEdicaoPedido();
@@ -2010,6 +2466,10 @@
 
         pedidos.unshift(novoPedido);
         seqPedido++;
+
+        if (typeof window.salvarPedidoFirestore === 'function') {
+          window.salvarPedidoFirestore(novoPedido, seqPedido);
+        }
 
         // Reset Formulário
         clienteInput.value = '';
@@ -2111,6 +2571,10 @@
         ped.status = 'finalizado';
         ped.dataFinalizacao = new Date().toLocaleString('pt-BR');
 
+        if (typeof window.salvarPedidoFirestore === 'function') {
+          window.salvarPedidoFirestore(ped);
+        }
+
         salvarPedidosStorage();
         renderTabelaPedidosAtivos();
         renderHistoricoPedidos();
@@ -2126,6 +2590,9 @@
 
       solicitarConfirmacao(`Deseja excluir o pedido ${ped.numero} em aberto?`, () => {
         pedidos = pedidos.filter(p => p.id !== id);
+        if (typeof window.excluirPedidoFirestore === 'function') {
+          window.excluirPedidoFirestore(id);
+        }
         salvarPedidosStorage();
         renderTabelaPedidosAtivos();
         renderHistoricoPedidos();
@@ -2134,7 +2601,346 @@
     }
 
     // ----------------------------------------------------
-    // ABA 4: PEDIDOS EM ABERTO LOGIC
+    // ORGANIZAÇÃO DA PRODUÇÃO (KANBAN DE ATELIÊ) LOGIC
+    // ----------------------------------------------------
+    function getStatusProducao(ped) {
+      if (ped.status === 'finalizado') return 'entregue';
+      if (!ped.statusProducao) return 'arte';
+      return ped.statusProducao;
+    }
+
+    function getNomeEtapa(etapaId) {
+      switch (etapaId) {
+        case 'arte': return '1. Arte & Aprovação';
+        case 'corte': return '2. Impressão & Corte';
+        case 'montagem': return '3. Montagem & Acabamento';
+        case 'pronto': return '4. Pronto p/ Retirada';
+        case 'entregue': return 'Entregue / Finalizado';
+        default: return etapaId;
+      }
+    }
+
+    function limparFiltrosProducao() {
+      const busca = document.getElementById('filtro-producao-busca');
+      const entrega = document.getElementById('filtro-producao-entrega');
+      if (busca) busca.value = '';
+      if (entrega) entrega.value = 'todas';
+      renderKanbanProducao();
+    }
+
+    function moverEtapaProducao(id, novaEtapa) {
+      const ped = pedidos.find(p => p.id === id);
+      if (!ped) return;
+
+      if (novaEtapa === 'entregue') {
+        finalizarPedidoAtivo(id);
+        return;
+      }
+
+      ped.statusProducao = novaEtapa;
+      ped.dataAtualizacaoStatus = new Date().toLocaleString('pt-BR');
+
+      if (typeof window.salvarPedidoFirestore === 'function') {
+        window.salvarPedidoFirestore(ped);
+      }
+
+      salvarPedidosStorage();
+      renderKanbanProducao();
+      renderTabelaPedidosAtivos();
+
+      showToast(`Pedido ${ped.numero} movido para "${getNomeEtapa(novaEtapa)}"!`);
+    }
+
+    window.handleDragStart = function(e, id) {
+      e.dataTransfer.setData('text/plain', id);
+      e.dataTransfer.effectAllowed = 'move';
+    };
+
+    window.handleDropEtapa = function(e, etapaDestino) {
+      e.preventDefault();
+      const target = e.currentTarget;
+      if (target) {
+        target.classList.remove('bg-indigo-50/60','bg-amber-50/60','bg-pink-50/60','bg-emerald-50/60','border-2','border-dashed','border-indigo-300','border-amber-300','border-pink-300','border-emerald-300');
+      }
+      const pedId = e.dataTransfer.getData('text/plain');
+      if (pedId) {
+        moverEtapaProducao(pedId, etapaDestino);
+      }
+    };
+
+    function calcularInfoUrgencia(dataEntregaIso) {
+      if (!dataEntregaIso) {
+        return { label: 'Sem data', badgeClass: 'bg-slate-100 text-slate-600 border-slate-200', icon: 'fa-regular fa-calendar' };
+      }
+      const hojeStr = new Date().toISOString().split('T')[0];
+      const hojeDate = new Date();
+      hojeDate.setHours(0,0,0,0);
+
+      const parts = dataEntregaIso.split('-');
+      if (parts.length !== 3) {
+        return { label: dataEntregaIso, badgeClass: 'bg-slate-100 text-slate-700 border-slate-200', icon: 'fa-regular fa-calendar' };
+      }
+
+      const ano = parseInt(parts[0], 10);
+      const mes = parseInt(parts[1], 10);
+      const dia = parseInt(parts[2], 10);
+      const dateEntrega = new Date(ano, mes - 1, dia);
+
+      const diffMs = dateEntrega - hojeDate;
+      const diffDias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+      if (diffDias < 0) {
+        return { label: `ATRASADO (${Math.abs(diffDias)}d)`, badgeClass: 'bg-rose-100 text-rose-800 border-rose-300 font-extrabold animate-pulse', icon: 'fa-solid fa-triangle-exclamation text-rose-600' };
+      }
+      if (diffDias === 0) {
+        return { label: 'HOJE!', badgeClass: 'bg-amber-100 text-amber-900 border-amber-300 font-extrabold', icon: 'fa-solid fa-clock text-amber-600' };
+      }
+      if (diffDias === 1) {
+        return { label: 'Amanhã', badgeClass: 'bg-orange-100 text-orange-900 border-orange-200 font-bold', icon: 'fa-regular fa-clock text-orange-600' };
+      }
+      if (diffDias <= 7) {
+        return { label: `${dia}/${mes}`, badgeClass: 'bg-blue-50 text-blue-800 border-blue-200 font-semibold', icon: 'fa-regular fa-calendar-check text-blue-600' };
+      }
+      return { label: `${dia}/${mes}`, badgeClass: 'bg-slate-100 text-slate-700 border-slate-200 font-medium', icon: 'fa-regular fa-calendar text-slate-500' };
+    }
+
+    function renderKanbanProducao() {
+      const colArte = document.getElementById('kanban-col-arte');
+      const colCorte = document.getElementById('kanban-col-corte');
+      const colMontagem = document.getElementById('kanban-col-montagem');
+      const colPronto = document.getElementById('kanban-col-pronto');
+
+      if (!colArte || !colCorte || !colMontagem || !colPronto) return;
+
+      colArte.innerHTML = '';
+      colCorte.innerHTML = '';
+      colMontagem.innerHTML = '';
+      colPronto.innerHTML = '';
+
+      let ativos = pedidos.filter(p => p.status === 'em_aberto');
+
+      const buscaVal = (document.getElementById('filtro-producao-busca')?.value || '').toLowerCase().trim();
+      const entregaVal = document.getElementById('filtro-producao-entrega')?.value || 'todas';
+
+      if (buscaVal) {
+        ativos = ativos.filter(ped => {
+          const clienteMatch = ped.cliente && ped.cliente.toLowerCase().includes(buscaVal);
+          const numeroMatch = ped.numero && ped.numero.toLowerCase().includes(buscaVal);
+          const obsMatch = ped.observacoes && ped.observacoes.toLowerCase().includes(buscaVal);
+          const itemMatch = ped.itens && ped.itens.some(i => i.produtoNome && i.produtoNome.toLowerCase().includes(buscaVal));
+          return clienteMatch || numeroMatch || obsMatch || itemMatch;
+        });
+      }
+
+      if (entregaVal !== 'todas') {
+        const hojeStr = new Date().toISOString().split('T')[0];
+        const hojeDate = new Date();
+        hojeDate.setHours(0,0,0,0);
+        const em7Dias = new Date(hojeDate);
+        em7Dias.setDate(em7Dias.getDate() + 7);
+
+        ativos = ativos.filter(ped => {
+          if (!ped.dataEntrega) return false;
+          const [ano, mes, dia] = ped.dataEntrega.split('-').map(Number);
+          const dataPed = new Date(ano, mes - 1, dia);
+
+          if (entregaVal === 'urgentes') return dataPed <= hojeDate;
+          if (entregaVal === 'hoje') return ped.dataEntrega === hojeStr;
+          if (entregaVal === 'proximos_7') return dataPed >= hojeDate && dataPed <= em7Dias;
+          return true;
+        });
+      }
+
+      const porEtapa = { arte: [], corte: [], montagem: [], pronto: [] };
+      const pecasPorEtapa = { arte: 0, corte: 0, montagem: 0, pronto: 0 };
+
+      ativos.forEach(ped => {
+        const e = getStatusProducao(ped);
+        if (porEtapa[e]) {
+          porEtapa[e].push(ped);
+          const totalPecas = (ped.itens || []).reduce((sum, item) => sum + (parseInt(item.quantidade, 10) || 0), 0);
+          pecasPorEtapa[e] += totalPecas;
+        } else {
+          porEtapa.arte.push(ped);
+        }
+      });
+
+      document.getElementById('cnt-col-arte').textContent = porEtapa.arte.length;
+      document.getElementById('cnt-col-corte').textContent = porEtapa.corte.length;
+      document.getElementById('cnt-col-montagem').textContent = porEtapa.montagem.length;
+      document.getElementById('cnt-col-pronto').textContent = porEtapa.pronto.length;
+
+      document.getElementById('stat-producao-arte-pedidos').textContent = porEtapa.arte.length;
+      document.getElementById('stat-producao-arte-pecas').textContent = `${pecasPorEtapa.arte} peças`;
+
+      document.getElementById('stat-producao-corte-pedidos').textContent = porEtapa.corte.length;
+      document.getElementById('stat-producao-corte-pecas').textContent = `${pecasPorEtapa.corte} peças`;
+
+      document.getElementById('stat-producao-montagem-pedidos').textContent = porEtapa.montagem.length;
+      document.getElementById('stat-producao-montagem-pecas').textContent = `${pecasPorEtapa.montagem} peças`;
+
+      document.getElementById('stat-producao-pronto-pedidos').textContent = porEtapa.pronto.length;
+      document.getElementById('stat-producao-pronto-pecas').textContent = `${pecasPorEtapa.pronto} peças`;
+
+      const renderColuna = (lista, containerEl, etapaAtual) => {
+        if (lista.length === 0) {
+          containerEl.innerHTML = `
+            <div class="flex flex-col items-center justify-center p-6 text-center border-2 border-dashed border-slate-200/80 rounded-xl text-slate-400 my-2">
+              <i class="fa-solid fa-clipboard-check text-2xl text-slate-300 mb-1"></i>
+              <p class="text-xs font-semibold">Sem pedidos nesta etapa</p>
+            </div>
+          `;
+          return;
+        }
+
+        lista.forEach(ped => {
+          const card = document.createElement('div');
+          card.className = 'bg-white p-4 rounded-xl border border-slate-200/90 shadow-xs hover:shadow-md transition-all cursor-grab active:cursor-grabbing space-y-3 relative group';
+          card.setAttribute('draggable', 'true');
+          card.setAttribute('ondragstart', `handleDragStart(event, '${ped.id}')`);
+
+          const urg = calcularInfoUrgencia(ped.dataEntrega);
+          const totalPecas = (ped.itens || []).reduce((sum, item) => sum + (parseInt(item.quantidade, 10) || 0), 0);
+          const resumoItensHtml = (ped.itens || []).map(i => `<li class="truncate"><span class="font-bold text-slate-900">${i.quantidade}x</span> ${escapeHtml(i.produtoNome)}</li>`).join('');
+
+          let progressoHtml = '';
+          if (etapaAtual === 'arte') progressoHtml = '<div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-indigo-500 w-1/4"></div></div>';
+          else if (etapaAtual === 'corte') progressoHtml = '<div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-amber-500 w-2/4"></div></div>';
+          else if (etapaAtual === 'montagem') progressoHtml = '<div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-pink-500 w-3/4"></div></div>';
+          else if (etapaAtual === 'pronto') progressoHtml = '<div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-emerald-500 w-full"></div></div>';
+
+          card.innerHTML = `
+            <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+              <div class="flex items-center gap-1.5">
+                <span class="font-extrabold text-xs text-indigo-700 font-display">${escapeHtml(ped.numero)}</span>
+                <span class="px-2 py-0.5 rounded-md text-[10px] border ${urg.badgeClass} flex items-center gap-1">
+                  <i class="${urg.icon}"></i>
+                  <span>${urg.label}</span>
+                </span>
+              </div>
+              <span class="text-xs font-extrabold text-slate-900">${formatarMoeda(ped.valorTotal)}</span>
+            </div>
+
+            <div class="space-y-1">
+              <p class="font-bold text-sm text-slate-900 leading-tight flex items-center gap-1.5">
+                <i class="fa-solid fa-user text-xs text-amber-700"></i>
+                <span>${escapeHtml(ped.cliente)}</span>
+              </p>
+            </div>
+
+            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-100 text-xs text-slate-700 space-y-1">
+              <div class="flex items-center justify-between text-[11px] font-bold text-slate-500 border-b border-slate-200/60 pb-1 mb-1">
+                <span>ITENS DO PEDIDO</span>
+                <span class="text-indigo-900 bg-indigo-50 px-1.5 py-0.2 rounded border border-indigo-100">${totalPecas} pcs</span>
+              </div>
+              <ul class="space-y-0.5 max-h-24 overflow-y-auto">
+                ${resumoItensHtml || '<li class="text-slate-400">Sem itens registrados</li>'}
+              </ul>
+            </div>
+
+            ${ped.observacoes ? `
+              <div class="text-[11px] text-slate-600 bg-amber-50/70 p-2 rounded-lg border border-amber-100 flex items-start gap-1.5">
+                <i class="fa-regular fa-comment-dots text-amber-700 mt-0.5 shrink-0"></i>
+                <span class="line-clamp-2">${escapeHtml(ped.observacoes)}</span>
+              </div>
+            ` : ''}
+
+            ${progressoHtml}
+
+            <div class="flex items-center justify-between pt-1 gap-1">
+              <div class="flex items-center gap-1">
+                ${etapaAtual !== 'arte' ? `
+                  <button 
+                    onclick="moverEtapaProducao('${ped.id}', '${etapaAtual === 'pronto' ? 'montagem' : (etapaAtual === 'montagem' ? 'corte' : 'arte')}')" 
+                    class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1"
+                    title="Voltar Etapa Anterior"
+                  >
+                    <i class="fa-solid fa-arrow-left"></i>
+                  </button>
+                ` : ''}
+
+                ${etapaAtual !== 'pronto' ? `
+                  <button 
+                    onclick="moverEtapaProducao('${ped.id}', '${etapaAtual === 'arte' ? 'corte' : (etapaAtual === 'corte' ? 'montagem' : 'pronto')}')" 
+                    class="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold flex items-center gap-1 shadow-2xs"
+                    title="Avançar para Próxima Etapa"
+                  >
+                    <span>Avançar</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                  </button>
+                ` : `
+                  <button 
+                    onclick="moverEtapaProducao('${ped.id}', 'entregue')" 
+                    class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1 shadow-2xs"
+                    title="Finalizar e Entregar Pedido"
+                  >
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>Finalizar</span>
+                  </button>
+                `}
+              </div>
+
+              <div class="flex items-center gap-1">
+                <button 
+                  onclick="gerarMensagemWhatsAppEtapa('${ped.id}')" 
+                  class="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200"
+                  title="Enviar mensagem da etapa pelo WhatsApp"
+                >
+                  <i class="fa-brands fa-whatsapp"></i>
+                </button>
+                <button 
+                  onclick="abrirModalPedido('${ped.id}')" 
+                  class="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200"
+                  title="Ver Comprovante / Detalhes"
+                >
+                  <i class="fa-solid fa-file-invoice"></i>
+                </button>
+              </div>
+            </div>
+          `;
+
+          containerEl.appendChild(card);
+        });
+      };
+
+      renderColuna(porEtapa.arte, colArte, 'arte');
+      renderColuna(porEtapa.corte, colCorte, 'corte');
+      renderColuna(porEtapa.montagem, colMontagem, 'montagem');
+      renderColuna(porEtapa.pronto, colPronto, 'pronto');
+    }
+
+    function gerarMensagemWhatsAppEtapa(id) {
+      const ped = pedidos.find(p => p.id === id);
+      if (!ped) return;
+
+      const etapa = ped.statusProducao || 'arte';
+      const clientePrimeiroNome = (ped.cliente || 'Cliente').split(' ')[0];
+      let msg = '';
+
+      if (etapa === 'arte') {
+        msg = `Olá, ${clientePrimeiroNome}! 👋\n\nA arte gráfica do seu pedido *${ped.numero}* no ateliê MM Personalizados está prontinha para sua aprovação! ✨\n\nPodemos confirmar para iniciarmos a impressão e corte? 😊`;
+      } else if (etapa === 'corte') {
+        msg = `Olá, ${clientePrimeiroNome}! 👋\n\nPassando para avisar que seu pedido *${ped.numero}* já está na etapa de *Impressão & Corte*! ✂️📄\n\nLogo em breve estará pronto!`;
+      } else if (etapa === 'montagem') {
+        msg = `Olá, ${clientePrimeiroNome}! 👋\n\nSeu pedido *${ped.numero}* está na fase final de *Montagem & Laços* aqui no ateliê! 🧩🎀\n\nCada detalhe feito com muito carinho! ❤️`;
+      } else if (etapa === 'pronto') {
+        msg = `Olá, ${clientePrimeiroNome}! 🎉✨\n\nNotícia maravilhosa: seu pedido *${ped.numero}* está *PRONTO PARA RETIRADA / ENVIO*! 📦🎈\n\nPodemos agendar a retirada?`;
+      } else {
+        msg = `Olá, ${clientePrimeiroNome}! Agradecemos a preferência com o pedido *${ped.numero}* no ateliê MM Personalizados! ❤️`;
+      }
+
+      const modalMsg = document.getElementById('textarea-msg-wa-ia');
+      if (modalMsg) modalMsg.value = msg;
+
+      const modal = document.getElementById('modal-whatsapp-ia');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    window.renderKanbanProducao = renderKanbanProducao;
+    window.limparFiltrosProducao = limparFiltrosProducao;
+
+    // ----------------------------------------------------
+    // ABA 5: PEDIDOS EM ABERTO LOGIC
     // ----------------------------------------------------
     function limparFiltrosPedidosAtivos() {
       const busca = document.getElementById('filtro-pedido-busca');
@@ -2831,79 +3637,7 @@
       window.open(url, '_blank');
     }
 
-    // 3. Assistente IA Flutuante Chat
-    function abrirModalAssistenteIA() {
-      const modal = document.getElementById('modal-assistente-ia');
-      if (modal) modal.classList.remove('hidden');
-    }
 
-    function fecharModalAssistenteIA() {
-      const modal = document.getElementById('modal-assistente-ia');
-      if (modal) modal.classList.add('hidden');
-    }
-
-    function usarPerguntaSugeridaIA(texto) {
-      const input = document.getElementById('input-chat-assistente-ia');
-      if (input) {
-        input.value = texto;
-        enviarMensagemAssistenteIA();
-      }
-    }
-
-    async function enviarMensagemAssistenteIA(e) {
-      if (e) e.preventDefault();
-
-      const input = document.getElementById('input-chat-assistente-ia');
-      if (!input || !input.value.trim()) return;
-
-      const msgUser = input.value.trim();
-      input.value = '';
-
-      const historico = document.getElementById('chat-historico-ia');
-      if (!historico) return;
-
-      // Adicionar bolha do Usuário
-      const userBubble = document.createElement('div');
-      userBubble.className = 'bg-purple-600 text-white p-3 rounded-xl ml-8 shadow-xs leading-relaxed font-medium';
-      userBubble.textContent = msgUser;
-      historico.appendChild(userBubble);
-
-      // Adicionar bolha temporária de Carregamento da IA
-      const loadingBubble = document.createElement('div');
-      loadingBubble.className = 'bg-white p-3 rounded-xl mr-8 border border-purple-100 shadow-xs text-slate-500 italic flex items-center gap-2';
-      loadingBubble.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-purple-600"></i> Pensando...`;
-      historico.appendChild(loadingBubble);
-
-      historico.scrollTop = historico.scrollHeight;
-
-      try {
-        const response = await fetch('/api/gemini/assistant', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mensagem: msgUser })
-        });
-
-        if (!response.ok) throw new Error('Erro na requisição');
-
-        const data = await response.json();
-        const respostaTexto = data.resposta || 'Desculpe, não consegui processar no momento.';
-
-        // Substituir bolha de carregamento pela resposta formatada
-        loadingBubble.className = 'bg-white p-3 rounded-xl mr-8 border border-purple-100 shadow-xs space-y-1 text-slate-800 leading-relaxed';
-        loadingBubble.innerHTML = `
-          <p class="font-bold text-purple-900 flex items-center gap-1.5 text-xs mb-1">
-            <i class="fa-solid fa-sparkles text-amber-500"></i> Assistente MM:
-          </p>
-          <div class="whitespace-pre-wrap">${escapeHtml(respostaTexto)}</div>
-        `;
-      } catch (err) {
-        console.error('Erro chat IA:', err);
-        loadingBubble.className = 'bg-rose-50 text-rose-700 p-3 rounded-xl mr-8 border border-rose-200 text-xs';
-        loadingBubble.textContent = 'Não foi possível se conectar com a IA. Tente novamente em instantes.';
-      } finally {
-        historico.scrollTop = historico.scrollHeight;
-      }
-    }
   </script>
 
 </body>

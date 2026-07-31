@@ -1,0 +1,40 @@
+{
+  "entities": {
+    "materias": {
+      "title": "Matéria Prima",
+      "description": "Lista de matérias-primas do ateliê",
+      "type": "object",
+      "properties": {
+        "descricao": { "type": "string" },
+        "valorUnitario": { "type": "number" }
+      },
+      "required": ["descricao", "valorUnitario"]
+    },
+    "produtos": {
+      "title": "Produtos",
+      "description": "Produtos cadastrados e precificados",
+      "type": "object",
+      "properties": {
+        "nome": { "type": "string" },
+        "venda": { "type": "number" },
+        "custoTotal": { "type": "number" },
+        "margemLucro": { "type": "number" },
+        "materiasComposicao": { "type": "array" }
+      },
+      "required": ["nome", "venda"]
+    },
+    "pedidos": {
+      "title": "Pedidos",
+      "description": "Pedidos de clientes",
+      "type": "object",
+      "properties": {
+        "numero": { "type": "string" },
+        "cliente": { "type": "string" },
+        "status": { "type": "string" },
+        "valorTotal": { "type": "number" },
+        "itens": { "type": "array" }
+      },
+      "required": ["cliente", "numero", "status"]
+    }
+  }
+}
